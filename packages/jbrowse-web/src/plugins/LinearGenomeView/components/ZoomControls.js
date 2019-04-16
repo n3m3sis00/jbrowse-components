@@ -11,6 +11,8 @@ const styles = {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
+    background: 'white',
+    border: '1px solid black',
   },
   slider: {
     width: 48,
@@ -21,6 +23,13 @@ function ZoomControls(props) {
   const { classes, model, controlsHeight } = props
   return (
     <div className={classes.container} style={{ height: controlsHeight }}>
+      <IconButton
+        onClick={() => {
+          model.zoomTo(model.bpPerPx * 10)
+        }}
+      >
+        <Icon fontSize="large">zoom_out</Icon>
+      </IconButton>
       <IconButton
         onClick={() => {
           model.zoomTo(model.bpPerPx * 2)
@@ -41,6 +50,13 @@ function ZoomControls(props) {
         }}
       >
         <Icon fontSize="small">zoom_in</Icon>
+      </IconButton>
+      <IconButton
+        onClick={() => {
+          model.zoomTo(model.bpPerPx / 10)
+        }}
+      >
+        <Icon fontSize="large">zoom_in</Icon>
       </IconButton>
     </div>
   )
