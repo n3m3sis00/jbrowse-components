@@ -1,3 +1,42 @@
+# jbrowse-web
+
+This package in the monorepo contains the main genome browser component
+
+## Pre-requsites
+
+Simply install pre-requisites with yarn
+
+```sh
+yarn
+```
+
+
+### Run
+
+```sh
+yarn start
+```
+
+This starts a webpack-dev-server on http://localhost:3000
+
+Starting the dev server can take a minute or so to start
+
+
+### More info
+
+See [the docs](../../docs/developer/jbrowse_web_basics.md) for more info
+
+
+
+
+It is recommended that if you are developing that you setup that you lint-on-save as all lint warnings are treated as errors
+
+
+### Notes
+
+We use a ejected create-react-app configuration
+
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 Below you will find some information on how to perform common tasks.<br>
