@@ -986,6 +986,25 @@
           }
         },
         {
+          "configId": "rna_seq",
+          "type": "AlignmentsTrack",
+          "name": "HCC1143 deep RNA-seq (chr21:19M-20M)",
+          "category": [
+            "RNA-seq"
+          ],
+          "adapter": {
+            "type": "BamAdapter",
+            "bamLocation": {
+              "uri": "https://s3.amazonaws.com/jbrowse.org/genomes/hg19/rnaseq/HCC1143.normal.21.19M-20M.bam"
+            },
+            "index": {
+              "location": {
+                "uri": "https://s3.amazonaws.com/jbrowse.org/genomes/hg19/rnaseq/HCC1143.normal.21.19M-20M.bam.bai"
+              }
+            }
+          }
+        },
+        {
           "configId": "rJxR1X2T0yu",
           "type": "AlignmentsTrack",
           "name": "HG00096 Illumina low coverage",
