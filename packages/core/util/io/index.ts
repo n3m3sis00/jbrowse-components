@@ -34,15 +34,33 @@ function isBlobLocation(location: IFileLocation): location is IBlobLocation {
 }
 
 export function openLocation(location: IFileLocation): GenericFilehandle {
-  if (!location) throw new Error('must provide a location to openLocation')
-  if (isElectron) {
-    if (isUriLocation(location)) return new ElectronRemoteFile(location.uri)
-    if (isLocalPathLocation(location))
-      return new ElectronLocalFile(location.localPath)
-  } else {
-    if (isUriLocation(location)) return openUrl(location.uri)
-    if (isLocalPathLocation(location)) return new LocalFile(location.localPath)
+  if (!location) {
+    throw new Error('must provide a location to openLocation')
   }
-  if (isBlobLocation(location)) return new BlobFile(location.blob)
+  if (isElectron) {
+    if (isUriLocation(location)) {
+      return new ElectronRemoteFile(location.uri)
+    }
+    if (isLocalPathLocation(location)) {
+      return new ElectronLocalFile(location.localPath)
+    }
+  } else {
+    if (isUriLocation(location)) {
+      return openUrl(location.uri)
+    }
+    if (isLocalPathLocation(location)) {
+      return new LocalFile(location.localPath)
+    }
+  }
+  if (isBlobLocation(location)) {
+    return new BlobFile(location.blob)
+  }
   throw new Error('invalid fileLocation')
+}
+
+export function fetch(url: string, params: any = {}): any {
+  if (window.electron) {
+    return window.electron.ipcRenderer.invoke('fetch', url, params)
+  }
+  return fetch(url, params)
 }

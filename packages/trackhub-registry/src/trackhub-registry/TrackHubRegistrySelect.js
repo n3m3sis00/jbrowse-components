@@ -7,6 +7,8 @@ import RadioGroup from '@material-ui/core/RadioGroup'
 import { makeStyles } from '@material-ui/core/styles'
 import Tooltip from '@material-ui/core/Tooltip'
 import Typography from '@material-ui/core/Typography'
+
+import { fetch } from '@gmod/jbrowse-core/util/io'
 import { PropTypes as MobxPropTypes } from 'mobx-react'
 import PropTypes from 'prop-types'
 import React, { useEffect, useState } from 'react'
@@ -55,11 +57,14 @@ function TrackHubRegistrySelect({ model }) {
   const classes = useStyles()
 
   useEffect(() => {
+    let finished = false
     async function getAssemblies() {
       const pingResponse = await doGet(
         'https://www.trackhubregistry.org/api/info/ping',
       )
-      if (!pingResponse) return
+      if (!pingResponse) {
+        return
+      }
       if (pingResponse.ping !== 1) {
         setErrorMessage('Registry is not available')
         return
@@ -67,49 +72,67 @@ function TrackHubRegistrySelect({ model }) {
       const assembliesResponse = await doGet(
         'https://www.trackhubregistry.org/api/info/assemblies',
       )
-      if (assembliesResponse) setAssemblies(assembliesResponse)
+      if (assembliesResponse && !finished) {
+        setAssemblies(assembliesResponse)
+      }
     }
 
     getAssemblies()
+    return () => {
+      finished = true
+    }
   }, [])
 
   useEffect(() => {
-    if (errorMessage) return
-    if (selectedAssembly && !hubs.size) getHubs(true)
-    else if (hubs.size && !allHubsRetrieved) getHubs()
-  })
-
-  async function getHubs(reset) {
-    const entriesPerPage = 10
-    const newHubs = reset ? new Map() : new Map(hubs)
-    const page = Math.floor(hubs.size / entriesPerPage) + 1
-    const response = await doPost(
-      'https://www.trackhubregistry.org/api/search',
-      { assembly: selectedAssembly },
-      // eslint-disable-next-line @typescript-eslint/camelcase
-      { page, entries_per_page: entriesPerPage },
-    )
-    if (response) {
-      for (const item of response.items) {
-        if (item.hub.url.startsWith('ftp'))
-          item.error = 'JBrowse web cannot add connections from FTP sources'
-        else {
-          let rawResponse
-          try {
-            // eslint-disable-next-line no-await-in-loop
-            rawResponse = await fetch(item.hub.url, { method: 'HEAD' })
-          } catch (error) {
-            item.error = error.message
+    let finished = false
+    async function getHubs(reset) {
+      const entriesPerPage = 10
+      const newHubs = reset ? new Map() : new Map(hubs)
+      const page = Math.floor(hubs.size / entriesPerPage) + 1
+      const response = await doPost(
+        'https://www.trackhubregistry.org/api/search',
+        { assembly: selectedAssembly },
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        { page, entries_per_page: entriesPerPage },
+      )
+      if (response) {
+        for (const item of response.items) {
+          if (item.hub.url.startsWith('ftp'))
+            item.error = 'JBrowse web cannot add connections from FTP sources'
+          else {
+            let rawResponse
+            try {
+              // eslint-disable-next-line no-await-in-loop
+              rawResponse = await fetch(item.hub.url, { method: 'HEAD' })
+            } catch (error) {
+              item.error = error.message
+            }
+            if (rawResponse && !rawResponse.ok)
+              item.error = `${response.status}: ${response.statusText}`
           }
-          if (rawResponse && !rawResponse.ok)
-            item.error = `${response.status}: ${response.statusText}`
+          newHubs.set(item.id, item)
         }
-        newHubs.set(item.id, item)
+        setHubs(newHubs)
+        if (newHubs.size === response.total_entries && !finished) {
+          setAllHubsRetrieved(true)
+        }
       }
-      setHubs(newHubs)
-      if (newHubs.size === response.total_entries) setAllHubsRetrieved(true)
     }
-  }
+    if (errorMessage) {
+      return () => {
+        finished = true
+      }
+    }
+    if (selectedAssembly && !hubs.size) {
+      getHubs(true)
+    } else if (hubs.size && !allHubsRetrieved) {
+      getHubs()
+    }
+
+    return () => {
+      finished = true
+    }
+  }, [allHubsRetrieved, errorMessage, hubs, selectedAssembly])
 
   function handleSelectSpecies(event) {
     setSelectedSpecies(event.target.value)
@@ -160,7 +183,7 @@ function TrackHubRegistrySelect({ model }) {
       )
       return null
     }
-    return rawResponse.json()
+    return JSON.parse(rawResponse.buffer.toString())
   }
 
   async function doPost(url, data = {}, params = {}) {
@@ -193,7 +216,7 @@ function TrackHubRegistrySelect({ model }) {
       )
       return null
     }
-    return rawResponse.json()
+    return JSON.parse(rawResponse.buffer.toString())
   }
 
   const renderItems = [

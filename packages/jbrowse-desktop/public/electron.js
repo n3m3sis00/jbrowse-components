@@ -243,6 +243,7 @@ ipcMain.handle('fetch', async (event, ...args) => {
   serializableResponse.status = response.status
   serializableResponse.statusText = response.statusText
   serializableResponse.buffer = await response.buffer()
+  serializableResponse.ok = response.ok
   return serializableResponse
 })
 
