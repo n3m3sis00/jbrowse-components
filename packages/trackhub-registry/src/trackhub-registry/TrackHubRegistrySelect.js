@@ -58,6 +58,37 @@ function TrackHubRegistrySelect({ model }) {
 
   useEffect(() => {
     let finished = false
+
+    async function doGet(url, params = {}) {
+      let rawResponse
+      const urlParams = Object.keys(params)
+        .map(param => `${param}=${params[param]}`)
+        .join(';')
+      try {
+        rawResponse = await fetch(`${url}${urlParams ? `?${urlParams}` : ''}`)
+      } catch (error) {
+        if (!finished)
+          setErrorMessage(
+            <span>
+              <strong>Network connection error.</strong> <br />
+              {error.message} <br />
+              {url}
+            </span>,
+          )
+        return null
+      }
+      if (!rawResponse.ok && !finished) {
+        setErrorMessage(
+          <span>
+            <strong>Error connecting to the URL.</strong> <br />
+            {rawResponse.status}: {rawResponse.statusText} <br />
+            {url}
+          </span>,
+        )
+        return null
+      }
+      return JSON.parse(rawResponse.buffer.toString())
+    }
     async function getAssemblies() {
       const pingResponse = await doGet(
         'https://www.trackhubregistry.org/api/info/ping',
@@ -65,7 +96,7 @@ function TrackHubRegistrySelect({ model }) {
       if (!pingResponse) {
         return
       }
-      if (pingResponse.ping !== 1) {
+      if (pingResponse.ping !== 1 && !finished) {
         setErrorMessage('Registry is not available')
         return
       }
@@ -85,6 +116,40 @@ function TrackHubRegistrySelect({ model }) {
 
   useEffect(() => {
     let finished = false
+
+    async function doPost(url, data = {}, params = {}) {
+      let rawResponse
+      const urlParams = Object.keys(params)
+        .map(param => `${param}=${params[param]}`)
+        .join(';')
+      try {
+        rawResponse = await fetch(`${url}${urlParams ? `?${urlParams}` : ''}`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        })
+      } catch (error) {
+        if (!finished)
+          setErrorMessage(
+            <span>
+              <strong>Network connection error.</strong> <br />
+              {error.message} <br />
+              {url}
+            </span>,
+          )
+        return null
+      }
+      if (!rawResponse.ok && !finished) {
+        setErrorMessage(
+          <span>
+            <strong>Error connecting to the URL.</strong> <br />
+            {rawResponse.status}: {rawResponse.statusText} <br />
+            {url}
+          </span>,
+        )
+        return null
+      }
+      return JSON.parse(rawResponse.buffer.toString())
+    }
     async function getHubs(reset) {
       const entriesPerPage = 10
       const newHubs = reset ? new Map() : new Map(hubs)
@@ -112,7 +177,9 @@ function TrackHubRegistrySelect({ model }) {
           }
           newHubs.set(item.id, item)
         }
-        setHubs(newHubs)
+        if (!finished) {
+          setHubs(newHubs)
+        }
         if (newHubs.size === response.total_entries && !finished) {
           setAllHubsRetrieved(true)
         }
@@ -154,69 +221,6 @@ function TrackHubRegistrySelect({ model }) {
     setSelectedHub(newHub)
     model.target.name.set(hubs.get(newHub).hub.shortLabel)
     model.target.trackDbId.set(newHub)
-  }
-
-  async function doGet(url, params = {}) {
-    let rawResponse
-    const urlParams = Object.keys(params)
-      .map(param => `${param}=${params[param]}`)
-      .join(';')
-    try {
-      rawResponse = await fetch(`${url}${urlParams ? `?${urlParams}` : ''}`)
-    } catch (error) {
-      setErrorMessage(
-        <span>
-          <strong>Network connection error.</strong> <br />
-          {error.message} <br />
-          {url}
-        </span>,
-      )
-      return null
-    }
-    if (!rawResponse.ok) {
-      setErrorMessage(
-        <span>
-          <strong>Error connecting to the URL.</strong> <br />
-          {rawResponse.status}: {rawResponse.statusText} <br />
-          {url}
-        </span>,
-      )
-      return null
-    }
-    return JSON.parse(rawResponse.buffer.toString())
-  }
-
-  async function doPost(url, data = {}, params = {}) {
-    let rawResponse
-    const urlParams = Object.keys(params)
-      .map(param => `${param}=${params[param]}`)
-      .join(';')
-    try {
-      rawResponse = await fetch(`${url}${urlParams ? `?${urlParams}` : ''}`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-      })
-    } catch (error) {
-      setErrorMessage(
-        <span>
-          <strong>Network connection error.</strong> <br />
-          {error.message} <br />
-          {url}
-        </span>,
-      )
-      return null
-    }
-    if (!rawResponse.ok) {
-      setErrorMessage(
-        <span>
-          <strong>Error connecting to the URL.</strong> <br />
-          {rawResponse.status}: {rawResponse.statusText} <br />
-          {url}
-        </span>,
-      )
-      return null
-    }
-    return JSON.parse(rawResponse.buffer.toString())
   }
 
   const renderItems = [
