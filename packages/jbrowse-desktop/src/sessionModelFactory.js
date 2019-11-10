@@ -159,9 +159,7 @@ export default pluginManager => {
         const connectionData = { ...initialSnapshot, name, type, configuration }
         if (!self.connections.has(assemblyName))
           self.connections.set(assemblyName, [])
-        const assemblyConnections = self.connections.get(assemblyName)
-        const length = assemblyConnections.push(connectionData)
-        return assemblyConnections[length - 1]
+        self.connections.get(assemblyName).push(connectionData)
       },
 
       breakConnection(configuration) {

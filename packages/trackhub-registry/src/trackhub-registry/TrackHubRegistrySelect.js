@@ -77,14 +77,15 @@ function TrackHubRegistrySelect({ model }) {
           )
         return null
       }
-      if (!rawResponse.ok && !finished) {
-        setErrorMessage(
-          <span>
-            <strong>Error connecting to the URL.</strong> <br />
-            {rawResponse.status}: {rawResponse.statusText} <br />
-            {url}
-          </span>,
-        )
+      if (!rawResponse.ok) {
+        if (!finished)
+          setErrorMessage(
+            <span>
+              <strong>Error connecting to the URL.</strong> <br />
+              {rawResponse.status}: {rawResponse.statusText} <br />
+              {url}
+            </span>,
+          )
         return null
       }
       return JSON.parse(rawResponse.buffer.toString())
@@ -216,7 +217,7 @@ function TrackHubRegistrySelect({ model }) {
     setAllHubsRetrieved(false)
   }
 
-  async function handleSelectHub(event) {
+  function handleSelectHub(event) {
     const newHub = event.target.value
     setSelectedHub(newHub)
     model.target.name.set(hubs.get(newHub).hub.shortLabel)

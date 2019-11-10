@@ -4,6 +4,7 @@ import {
 } from '@gmod/jbrowse-core/configuration'
 import connectionModelFactory from '@gmod/jbrowse-core/BaseConnectionModel'
 import { types } from 'mobx-state-tree'
+import { fetch } from '@gmod/jbrowse-core/util/io'
 import configSchema from './configSchema'
 import { generateTracks } from './tracks'
 
@@ -16,19 +17,24 @@ export default function(pluginManager) {
         type: types.literal('UCSCTrackHubRegistryConnection'),
         configuration: ConfigurationReference(configSchema),
       })
+      .volatile({
+        error: undefined,
+      })
       .actions(self => ({
-        connect(connectionConf) {
+        connect() {
+          console.log('here')
           self.clear()
-          const trackDbId = readConfObject(connectionConf, 'trackDbId')
+          const trackDbId = readConfObject(self.configuration, 'trackDbId')
+          console.log('here', trackDbId)
           fetch(
             `https://www.trackhubregistry.org/api/search/trackdb/${trackDbId}`,
           )
-            .then(rawResponse => rawResponse.json())
+            .then(rawResponse => JSON.parse(rawResponse.buffer.toString()))
             .then(trackDb => {
               self.setTrackConfs(generateTracks(trackDb))
             })
             .catch(error => {
-              console.error(error)
+              self.setError(error)
             })
         },
       })),

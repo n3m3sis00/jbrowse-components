@@ -15,7 +15,7 @@ import Variants from '@gmod/jbrowse-plugin-variants'
 import Wiggle from '@gmod/jbrowse-plugin-wiggle'
 import SpreadsheetViewPlugin from '@gmod/jbrowse-plugin-spreadsheet-view'
 import BreakpointSplitView from '@gmod/jbrowse-plugin-breakpoint-split-view'
-// import TrackHubRegistry from '@gmod/jbrowse-plugin-trackhub-registry'
+import TrackHubRegistry from '@gmod/jbrowse-plugin-trackhub-registry'
 
 export default [
   Alignments,
@@ -35,5 +35,5 @@ export default [
   Wiggle,
   SpreadsheetViewPlugin,
   BreakpointSplitView,
-  // TrackHubRegistry,
+  TrackHubRegistry,
 ]
