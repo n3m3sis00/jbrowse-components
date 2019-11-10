@@ -17,25 +17,26 @@ export default function(pluginManager) {
         type: types.literal('UCSCTrackHubRegistryConnection'),
         configuration: ConfigurationReference(configSchema),
       })
-      .volatile({
+      .volatile(() => ({
         error: undefined,
-      })
+      }))
       .actions(self => ({
-        connect() {
-          console.log('here')
-          self.clear()
-          const trackDbId = readConfObject(self.configuration, 'trackDbId')
-          console.log('here', trackDbId)
-          fetch(
-            `https://www.trackhubregistry.org/api/search/trackdb/${trackDbId}`,
-          )
-            .then(rawResponse => JSON.parse(rawResponse.buffer.toString()))
-            .then(trackDb => {
-              self.setTrackConfs(generateTracks(trackDb))
-            })
-            .catch(error => {
-              self.setError(error)
-            })
+        async connect() {
+          try {
+            self.clear()
+            const trackDbId = readConfObject(self.configuration, 'trackDbId')
+            const response = await fetch(
+              `https://www.trackhubregistry.org/api/search/trackdb/${trackDbId}`,
+            )
+            const trackDb = JSON.parse(response.buffer.toString())
+            self.setTrackConfs(generateTracks(trackDb._source))
+          } catch (error) {
+            console.error(error)
+            self.setError(error)
+          }
+        },
+        setError(error) {
+          self.error = error
         },
       })),
   )

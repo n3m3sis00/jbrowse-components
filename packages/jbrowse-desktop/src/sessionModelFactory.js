@@ -147,10 +147,14 @@ export default pluginManager => {
 
       makeConnection(configuration, initialSnapshot = {}) {
         const { type } = configuration
-        if (!type) throw new Error('track configuration has no `type` listed')
+        if (!type) {
+          throw new Error('track configuration has no `type` listed')
+        }
         const name = readConfObject(configuration, 'name')
         const connectionType = pluginManager.getConnectionType(type)
-        if (!connectionType) throw new Error(`unknown connection type ${type}`)
+        if (!connectionType) {
+          throw new Error(`unknown connection type ${type}`)
+        }
         let confParent = configuration
         do {
           confParent = getParent(confParent)
