@@ -142,18 +142,25 @@ const blockState = types
         renderBlockEffect(cast(self), data)
       },
       beforeDestroy() {
-        if (renderInProgress && !renderInProgress.signal.aborted) {
-          renderInProgress.abort()
+        let trackId
+        try {
+          if (renderInProgress && !renderInProgress.signal.aborted) {
+            renderInProgress.abort()
+          }
+          const track = getParent(self, 2)
+          const { rendererType } = track
+          trackId = track.id
+
+          const view = getContainingView(track)
+          const { rpcManager } = getSession(view) as any
+          const { renderArgs } = renderBlockData(cast(self))
+          rendererType.freeResourcesInClient(
+            rpcManager,
+            JSON.parse(JSON.stringify(renderArgs)),
+          )
+        } catch (e) {
+          console.error(`error during beforeDestroy on ${trackId}`, e)
         }
-        const track = getParent(self, 2)
-        const view = getContainingView(track)
-        const { rpcManager } = getSession(view) as any
-        const { rendererType } = track
-        const { renderArgs } = renderBlockData(cast(self))
-        rendererType.freeResourcesInClient(
-          rpcManager,
-          JSON.parse(JSON.stringify(renderArgs)),
-        )
       },
     }
   })
