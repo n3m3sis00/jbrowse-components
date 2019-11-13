@@ -29,15 +29,22 @@ const useStyles = makeStyles(theme => ({
 
 function TrackControls({ track, view, onConfigureClick }) {
   const classes = useStyles()
-  let trackName = getConf(track, 'name') || track.id
   const session = getSession(track)
-  if (getConf(track, 'type') === 'ReferenceSequenceTrack') {
-    trackName = 'Reference Sequence'
-    session.datasets.forEach(datsetConf => {
-      const { assembly } = datsetConf
-      if (assembly.sequence === track.configuration)
-        trackName = `Reference Sequence (${readConfObject(assembly, 'name')})`
-    })
+  let trackName
+  let description
+  try {
+    trackName = getConf(track, 'name') || track.id
+    description = getConf(track, 'description')
+    if (getConf(track, 'type') === 'ReferenceSequenceTrack') {
+      trackName = 'Reference Sequence'
+      session.datasets.forEach(datsetConf => {
+        const { assembly } = datsetConf
+        if (assembly.sequence === track.configuration)
+          trackName = `Reference Sequence (${readConfObject(assembly, 'name')})`
+      })
+    }
+  } catch (e) {
+    trackName = 'undefined'
   }
   return (
     <>
@@ -75,7 +82,7 @@ function TrackControls({ track, view, onConfigureClick }) {
         color="textSecondary"
         className={classes.trackDescription}
       >
-        {getConf(track, 'description')}
+        {description}
       </Typography>
     </>
   )

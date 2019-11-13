@@ -93,40 +93,6 @@
           }
         },
         {
-          "configId": "clinvar_cnv_hg19",
-          "type": "BasicTrack",
-          "name": "Clinvar CNV",
-          "category": [
-            "Clinvar"
-          ],
-          "adapter": {
-            "type": "BigBedAdapter",
-            "bigBedLocation": {
-              "uri": "https://hgdownload.soe.ucsc.edu/gbdb/hg19/bbi/clinvar/clinvarCnv.bb"
-            }
-          },
-          "renderer": {
-            "type": "SvgFeatureRenderer"
-          }
-        },
-        {
-          "configId": "clinvar_hg19",
-          "type": "BasicTrack",
-          "name": "Clinvar variants",
-          "category": [
-            "Clinvar"
-          ],
-          "adapter": {
-            "type": "BigBedAdapter",
-            "bigBedLocation": {
-              "uri": "https://hgdownload.soe.ucsc.edu/gbdb/hg19/bbi/clinvar/clinvarMain.bb"
-            }
-          },
-          "renderer": {
-            "type": "SvgFeatureRenderer"
-          }
-        },
-        {
           "configId": "ngmlr",
           "type": "AlignmentsTrack",
           "name": "Breast cancer pacbio (NGMLR)",
@@ -474,40 +440,6 @@
           }
         },
         {
-          "configId": "nclist_genes_hg19",
-          "type": "BasicTrack",
-          "name": "Gencode v19",
-          "category": [
-            "Genes"
-          ],
-          "adapter": {
-            "type": "NCListAdapter",
-            "rootUrlTemplate": "https://jbrowse.org/genomes/hg19/gencode/{refseq}/trackData.json"
-          },
-          "renderer": {
-            "type": "SvgFeatureRenderer"
-          }
-        },
-        {
-          "configId": "repeats_hg19",
-          "type": "BasicTrack",
-          "name": "UCSC",
-          "category": [
-            "UCSC RepeatMasker"
-          ],
-          "adapter": {
-            "configId": "wCI0N1qJgMe",
-            "type": "BigBedAdapter",
-            "bigBedLocation": {
-              "uri": "https://jbrowse.org/genomes/hg19/repeats.bb"
-            }
-          },
-          "renderer": {
-            "configId": "lqGk6Jefctk",
-            "type": "SvgFeatureRenderer"
-          }
-        },
-        {
           "configId": "bigbed_peaks",
           "type": "BasicTrack",
           "name": "Encode peaks",
@@ -674,23 +606,6 @@
             "labels": {
               "configId": "9m6o3wEqAf"
             }
-          }
-        },
-        {
-          "configId": "mane_hg38",
-          "type": "BasicTrack",
-          "name": "MANE 0.6",
-          "category": [
-            "Annotation"
-          ],
-          "adapter": {
-            "type": "BigBedAdapter",
-            "bigBedLocation": {
-              "uri": "https://hgdownload.soe.ucsc.edu/gbdb/hg38/mane/mane.0.6.bb"
-            }
-          },
-          "renderer": {
-            "type": "SvgFeatureRenderer"
           }
         },
         {

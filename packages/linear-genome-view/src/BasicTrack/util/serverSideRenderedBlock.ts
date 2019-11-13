@@ -165,65 +165,71 @@ export type BlockStateModel = typeof blockState
 // not using a flow for this, because the flow doesn't
 // work with autorun
 function renderBlockData(self: Instance<BlockStateModel>) {
-  const track = getParent(self, 2)
-  const view = getContainingView(track)
-  const { rpcManager } = getSession(view) as any
+  try {
+    const track = getParent(self, 2)
+    const view = getContainingView(track)
+    const { rpcManager } = getSession(view) as any
 
-  const assemblyName = getTrackAssemblyName(track)
+    const assemblyName = getTrackAssemblyName(track)
 
-  const { assemblyData } = getSession(self) as any
-  const trackAssemblyData =
-    (assemblyData && assemblyData.get(assemblyName)) || {}
-  const trackAssemblyAliases = trackAssemblyData.aliases || []
-  let cannotBeRenderedReason
-  if (
-    !(
-      assemblyName === self.region.assemblyName ||
-      trackAssemblyAliases.includes(self.region.assemblyName)
+    const { assemblyData } = getSession(self) as any
+    const trackAssemblyData =
+      (assemblyData && assemblyData.get(assemblyName)) || {}
+    const trackAssemblyAliases = trackAssemblyData.aliases || []
+    let cannotBeRenderedReason
+    if (
+      !(
+        assemblyName === self.region.assemblyName ||
+        trackAssemblyAliases.includes(self.region.assemblyName)
+      )
     )
-  )
-    cannotBeRenderedReason = 'region assembly does not match track assembly'
-  else cannotBeRenderedReason = track.regionCannotBeRendered(self.region)
-  const { renderProps } = track
-  const { rendererType } = track
-  const { config } = renderProps
-  // This line is to trigger the mobx reaction when the config changes
-  // It won't trigger the reaction if it doesn't think we're accessing it
-  readConfObject(config)
+      cannotBeRenderedReason = 'region assembly does not match track assembly'
+    else cannotBeRenderedReason = track.regionCannotBeRendered(self.region)
+    const { renderProps } = track
+    const { rendererType } = track
+    const { config } = renderProps
+    // This line is to trigger the mobx reaction when the config changes
+    // It won't trigger the reaction if it doesn't think we're accessing it
+    readConfObject(config)
 
-  let sequenceConfig: { type?: string } = {}
-  if (trackAssemblyData.sequence) {
-    sequenceConfig = getSnapshot(trackAssemblyData.sequence.adapter)
-  }
+    let sequenceConfig: { type?: string } = {}
+    if (trackAssemblyData.sequence) {
+      sequenceConfig = getSnapshot(trackAssemblyData.sequence.adapter)
+    }
 
-  return {
-    rendererType,
-    rpcManager,
-    renderProps,
-    cannotBeRenderedReason,
-    trackError: track.error,
-    renderArgs: {
-      assemblyName,
-      region: self.region,
-      adapterType: track.adapterType.name,
-      adapterConfig: getConf(track, 'adapter'),
-      sequenceAdapterType: sequenceConfig.type,
-      sequenceAdapterConfig: sequenceConfig,
-      rendererType: rendererType.name,
+    return {
+      rendererType,
+      rpcManager,
       renderProps,
-      sessionId: track.id,
-      timeout: 1000000, // 10000,
-    },
+      cannotBeRenderedReason,
+      trackError: track.error,
+      renderArgs: {
+        assemblyName,
+        region: self.region,
+        adapterType: track.adapterType.name,
+        adapterConfig: getConf(track, 'adapter'),
+        sequenceAdapterType: sequenceConfig.type,
+        sequenceAdapterConfig: sequenceConfig,
+        rendererType: rendererType.name,
+        renderProps,
+        sessionId: track.id,
+        timeout: 1000000, // 10000,
+      },
+    }
+  } catch (e) {
+    return {
+      trackError: e.message,
+    }
   }
 }
 
 interface RenderProps {
-  trackError: string
-  rendererType: any
-  renderProps: { [key: string]: any }
-  rpcManager: { call: Function }
-  cannotBeRenderedReason: string
-  renderArgs: { [key: string]: any }
+  trackError?: string // an error reason to not render the track
+  rendererType?: any
+  renderProps?: { [key: string]: any }
+  rpcManager?: { call: Function }
+  cannotBeRenderedReason?: string // a non-error reason to not render the track data e.g. zoom level too high
+  renderArgs?: { [key: string]: any }
 }
 
 async function renderBlockEffect(
@@ -234,10 +240,10 @@ async function renderBlockEffect(
   const {
     trackError,
     rendererType,
-    renderProps,
+    renderProps = {},
     rpcManager,
     cannotBeRenderedReason,
-    renderArgs,
+    renderArgs = {},
   } = props
   // console.log(getContainingView(self).rendererType)
   if (!isAlive(self)) return
@@ -253,7 +259,10 @@ async function renderBlockEffect(
 
   const aborter = new AbortController()
   self.setLoading(aborter)
-  if (renderProps.notReady) return
+
+  if (renderProps.notReady) {
+    return
+  }
 
   try {
     renderArgs.signal = aborter.signal

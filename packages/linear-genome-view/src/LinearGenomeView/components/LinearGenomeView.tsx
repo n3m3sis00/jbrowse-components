@@ -113,6 +113,27 @@ const useStyles = makeStyles(theme => ({
   ...buttonStyles(theme),
 }))
 
+class ErrorBoundary extends React.Component {
+  readonly state = {
+    error: undefined,
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    // Update state so the next render will show the fallback UI.
+    return { error }
+  }
+
+  render() {
+    const { error } = this.state
+    if (error) {
+      // You can render any custom fallback UI
+      return <p style={{ color: 'red' }}>Error: {String(error)}</p>
+    }
+
+    return this.props.children
+  }
+}
+
 const TrackContainer = observer(
   (props: { model: LGV; track: Instance<BaseTrackStateModel> }) => {
     const { model, track } = props
@@ -125,24 +146,28 @@ const TrackContainer = observer(
           className={clsx(classes.controls, classes.trackControls)}
           style={{ gridRow: `track-${track.id}`, gridColumn: 'controls' }}
         >
-          <ControlsComponent
-            track={track}
-            view={model}
-            onConfigureClick={track.activateConfigurationUI}
-          />
+          <ErrorBoundary>
+            <ControlsComponent
+              track={track}
+              view={model}
+              onConfigureClick={track.activateConfigurationUI}
+            />
+          </ErrorBoundary>
         </div>
         <TrackRenderingContainer
           trackId={track.id}
           onHorizontalScroll={model.horizontalScroll}
           setScrollTop={track.setScrollTop}
         >
-          <RenderingComponent
-            model={track}
-            offsetPx={offsetPx}
-            bpPerPx={bpPerPx}
-            blockState={{}}
-            onHorizontalScroll={model.horizontalScroll}
-          />
+          <ErrorBoundary>
+            <RenderingComponent
+              model={track}
+              offsetPx={offsetPx}
+              bpPerPx={bpPerPx}
+              blockState={{}}
+              onHorizontalScroll={model.horizontalScroll}
+            />
+          </ErrorBoundary>
         </TrackRenderingContainer>
         <ResizeHandle
           onDrag={track.resizeHeight}
@@ -542,7 +567,9 @@ const LinearGenomeView = observer((props: { model: LGV }) => {
               </div>
             ) : null}
             {tracks.map(track => (
-              <TrackContainer key={track.id} model={model} track={track} />
+              <ErrorBoundary key={track.id}>
+                <TrackContainer model={model} track={track} />
+              </ErrorBoundary>
             ))}
           </>
         )}

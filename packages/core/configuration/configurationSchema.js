@@ -230,5 +230,5 @@ export function ConfigurationSchema(
 }
 
 export function ConfigurationReference(schemaType) {
-  return types.union(types.reference(schemaType), schemaType)
+  return types.union(types.safeReference(schemaType), schemaType)
 }
