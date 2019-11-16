@@ -186,7 +186,7 @@ export default class implements Feature {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const plain: any = {}
     this.tags().forEach((t: string) => {
-      plain[t] = this.get(t)
+      if (t !== 'seq' && t !== 'qual') plain[t] = this.get(t)
     })
     plain.refName = this.get('refName')
     plain.name = this.get('name')
