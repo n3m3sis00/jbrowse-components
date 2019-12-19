@@ -83,11 +83,18 @@ function useJBrowseWeb(config, initialState) {
     } catch (error) {
       // if it failed to load, it's probably a problem with the saved sessions,
       // so just delete them and try again
-      setRootModel(
-        JBrowseRootModel.create({
-          jbrowse: { ...configSnapshot, savedSessions: [] },
-        }),
-      )
+      try {
+        setRootModel(
+          JBrowseRootModel.create({
+            jbrowse: { ...configSnapshot, savedSessions: [] },
+          }),
+        )
+      } catch (e) {
+        console.error(e)
+        const additionalMsg =
+          e.message.length > 10000 ? '... see console for more' : ''
+        throw new Error(e.message.slice(0, 10000) + additionalMsg)
+      }
     }
   }, [configSnapshot])
 
