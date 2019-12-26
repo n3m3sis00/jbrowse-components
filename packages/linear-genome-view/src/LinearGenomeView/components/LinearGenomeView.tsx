@@ -5,6 +5,7 @@ import {
 } from '@gmod/jbrowse-core/util'
 import { readConfObject } from '@gmod/jbrowse-core/configuration'
 import { IRegion } from '@gmod/jbrowse-core/mst-types'
+import RootModel from '@gmod/jbrowse-core/rootModel'
 
 // material ui things
 import { makeStyles } from '@material-ui/core/styles'
@@ -419,19 +420,19 @@ const Controls = observer(({ model }) => {
 // note: as of writing, this is identifical (except with typescript) to circularview's copy
 // if modified, consider refactoring or updating circularview's copy
 // not extracted to a separate component just yet...
-const ImportForm = observer(({ model }) => {
+const ImportForm = observer(({ model }: { model: LGV }) => {
   const classes = useStyles()
   const [selectedDatasetIdx, setSelectedDatasetIdx] = useState('')
-  const { datasets } = getRoot(model).jbrowse
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const datasetChoices = datasets.map((dataset: any) =>
-    readConfObject(dataset, 'name'),
+  const root = getRoot<typeof RootModel>(model)
+  const { assemblies } = root.jbrowse
+  const datasetChoices = assemblies.map(assembly =>
+    readConfObject(assembly, 'name'),
   )
   function openButton() {
     if (parseInt(selectedDatasetIdx, 10) >= 0) {
-      const dataset = datasets[Number(selectedDatasetIdx)]
-      if (dataset) {
-        const assemblyName = readConfObject(dataset.assembly, 'name')
+      const assembly = assemblies[Number(selectedDatasetIdx)]
+      if (assembly) {
+        const assemblyName = readConfObject(assembly, 'name')
         if (
           assemblyName &&
           assemblyName !== model.displayRegionsFromAssemblyName

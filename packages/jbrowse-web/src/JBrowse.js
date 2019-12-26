@@ -28,16 +28,16 @@ import JBrowseRootModel from './rootModel'
 
 async function parseConfig(configLoc) {
   const config = JSON.parse(await openLocation(configLoc).readFile('utf8'))
-  if (configLoc.uri === 'test_data/config.json' && inDevelopment) {
-    config.datasets = mergeConfigs(
-      config,
-      JSON.parse(
-        await openLocation({ uri: 'test_data/config_in_dev.json' }).readFile(
-          'utf8',
-        ),
-      ),
-    )
-  }
+  // if (configLoc.uri === 'test_data/config.json' && inDevelopment) {
+  //   config.datasets = mergeConfigs(
+  //     config,
+  //     JSON.parse(
+  //       await openLocation({ uri: 'test_data/config_in_dev.json' }).readFile(
+  //         'utf8',
+  //       ),
+  //     ),
+  //   )
+  // }
   return config
 }
 
