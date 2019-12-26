@@ -1,11 +1,17 @@
 import { ConfigurationSchema } from '@gmod/jbrowse-core/configuration'
 import PluginManager from '@gmod/jbrowse-core/PluginManager'
 import RpcManager from '@gmod/jbrowse-core/rpc/RpcManager'
-import { getSnapshot, resolveIdentifier, types } from 'mobx-state-tree'
+import {
+  getSnapshot,
+  resolveIdentifier,
+  types,
+  SnapshotIn,
+} from 'mobx-state-tree'
 import assemblyManager from '@gmod/jbrowse-core/assemblyManager'
 import * as rpcFuncs from './rpcMethods'
 import AssemblyConfigSchemasFactory from './assemblyConfigSchemas'
 import corePlugins from './corePlugins'
+// @ts-ignore
 import RenderWorker from './rpc.worker'
 import sessionModelFactory from './sessionModelFactory'
 
@@ -34,14 +40,14 @@ const DatasetConfigSchema = ConfigurationSchema(
     ),
   },
   {
-    actions: self => ({
-      addTrackConf(trackConf) {
+    actions: (self: any) => ({
+      addTrackConf(trackConf: { type: string }) {
         const { type } = trackConf
         if (!type) throw new Error(`unknown track type ${type}`)
         const length = self.tracks.push(trackConf)
         return self.tracks[length - 1]
       },
-      addConnectionConf(connectionConf) {
+      addConnectionConf(connectionConf: { type: string }) {
         const { type } = connectionConf
         if (!type) throw new Error(`unknown connection type ${type}`)
         const length = self.connections.push(connectionConf)
@@ -51,9 +57,7 @@ const DatasetConfigSchema = ConfigurationSchema(
   },
 )
 
-// poke some things for testing (this stuff will eventually be removed)
-window.getSnapshot = getSnapshot
-window.resolveIdentifier = resolveIdentifier
+type SessionSnapshot = SnapshotIn<typeof sessionModelFactory>
 
 const JBrowseWeb = types
   .model('JBrowseWeb', {
@@ -81,27 +85,27 @@ const JBrowseWeb = types
     savedSessions: types.array(types.frozen(Session)),
   })
   .actions(self => ({
-    addSavedSession(sessionSnapshot) {
+    addSavedSession(sessionSnapshot: SessionSnapshot) {
       const length = self.savedSessions.push(sessionSnapshot)
       return self.savedSessions[length - 1]
     },
-    removeSavedSession(sessionSnapshot) {
+    removeSavedSession(sessionSnapshot: SessionSnapshot) {
       self.savedSessions.remove(sessionSnapshot)
     },
-    replaceSavedSession(oldName, snapshot) {
+    replaceSavedSession(oldName: string, snapshot: SessionSnapshot) {
       const savedSessionIndex = self.savedSessions.findIndex(
         savedSession => savedSession.name === oldName,
       )
       self.savedSessions[savedSessionIndex] = snapshot
     },
-    updateSavedSession(sessionSnapshot) {
+    updateSavedSession(sessionSnapshot: SessionSnapshot) {
       const sessionIndex = self.savedSessions.findIndex(
         savedSession => savedSession.name === sessionSnapshot.name,
       )
       if (sessionIndex === -1) self.savedSessions.push(sessionSnapshot)
       else self.savedSessions[sessionIndex] = sessionSnapshot
     },
-    addDataset(datasetConf) {
+    addDataset(datasetConf: any) {
       const length = self.datasets.push(datasetConf)
       return self.datasets[length - 1]
     },
@@ -122,6 +126,7 @@ const JBrowseWeb = types
         WebWorkerRpcDriver: { WorkerClass: RenderWorker },
         MainThreadRpcDriver: { rpcFuncs },
       },
+      // @ts-ignore
       self.getRefNameMapForAdapter,
     ),
     refNameMaps: new Map(),
