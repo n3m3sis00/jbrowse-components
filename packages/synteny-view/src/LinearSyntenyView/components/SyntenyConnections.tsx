@@ -105,6 +105,7 @@ export default (pluginManager: any) => {
             layoutMatches.length ? `synteny-view-loaded` : 'synteny-view'
           }
         >
+          //@ts-ignore
           {layoutMatches.map(chunk => {
             const ret = []
             // we follow a path in the list of chunks, not from top to bottom, just in series

@@ -57,7 +57,7 @@ const DatasetConfigSchema = ConfigurationSchema(
   },
 )
 
-type SessionSnapshot = SnapshotIn<typeof sessionModelFactory>
+type SessionSnapshot = SnapshotIn<typeof Session>
 
 const JBrowseWeb = types
   .model('JBrowseWeb', {
