@@ -29,7 +29,7 @@ import Typography from '@material-ui/core/Typography'
 // misc
 import clsx from 'clsx'
 import { observer } from 'mobx-react'
-import { Instance, getRoot, isAlive } from 'mobx-state-tree'
+import { Instance, getRoot, isAlive, getSnapshot } from 'mobx-state-tree'
 import ReactPropTypes from 'prop-types'
 import React, { useState } from 'react'
 
@@ -422,16 +422,18 @@ const Controls = observer(({ model }) => {
 const ImportForm = observer(({ model }) => {
   const classes = useStyles()
   const [selectedDatasetIdx, setSelectedDatasetIdx] = useState('')
-  const { datasets } = getRoot(model).jbrowse
+  const jb = getRoot(model).jbrowse
+  const { assemblies } = jb
+  console.log(getSnapshot(jb))
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const datasetChoices = datasets.map((dataset: any) =>
-    readConfObject(dataset, 'name'),
-  )
+  const assemblyChoices = jb.assemblies.map((assembly: any) =>
+    readConfObject(assembly, 'name'),
+  ) as string[]
   function openButton() {
     if (parseInt(selectedDatasetIdx, 10) >= 0) {
-      const dataset = datasets[Number(selectedDatasetIdx)]
-      if (dataset) {
-        const assemblyName = readConfObject(dataset.assembly, 'name')
+      const assembly = assemblies[Number(selectedDatasetIdx)]
+      if (assembly) {
+        const assemblyName = readConfObject(assembly, 'name')
         if (
           assemblyName &&
           assemblyName !== model.displayRegionsFromAssemblyName
@@ -477,7 +479,7 @@ const ImportForm = observer(({ model }) => {
                     setSelectedDatasetIdx(String(event.target.value))
                   }}
                 >
-                  {datasetChoices.map((name: string, idx: number) => (
+                  {assemblyChoices.map((name, idx) => (
                     <MenuItem key={name} value={idx}>
                       {name}
                     </MenuItem>

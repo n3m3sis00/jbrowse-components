@@ -1,14 +1,11 @@
 import { makeStyles } from '@material-ui/core/styles'
 
 import { observer, PropTypes } from 'mobx-react'
-import { isAlive } from 'mobx-state-tree'
+import { isAlive, getSnapshot } from 'mobx-state-tree'
 import ReactPropTypes from 'prop-types'
 import React, { useEffect, useRef } from 'react'
 import { withContentRect } from 'react-measure'
-
-import { inDevelopment } from '../util'
 import DrawerWidget from './DrawerWidget'
-import DevTools from './DevTools'
 import Snackbar from './Snackbar'
 
 const useStyles = makeStyles(theme => ({
@@ -80,6 +77,7 @@ function App({ contentRect, measureRef, session }) {
   }, [session, contentRect])
 
   const { visibleDrawerWidget, viewsWidth, drawerWidth } = session
+  console.log(getSnapshot(session))
 
   return (
     <div
@@ -119,7 +117,6 @@ function App({ contentRect, measureRef, session }) {
               view={view}
             />
           ))}
-          {inDevelopment ? <DevTools session={session} /> : null}
           <div style={{ height: 300 }} />
         </div>
       </div>

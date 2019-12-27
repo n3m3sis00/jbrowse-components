@@ -76,21 +76,17 @@ export default function sessionModelFactory(pluginManager: any) {
       get rpcManager() {
         return getParent(self).jbrowse.rpcManager
       },
+      get assemblies() {
+        console.log('herere')
+        return getParent(self).jbrowse.assemblies
+      },
       get assemblyData() {
         return getParent(self).jbrowse.assemblyData
       },
       get configuration() {
         return getParent(self).jbrowse.configuration
       },
-      get datasets() {
-        return getParent(self).jbrowse.datasets
-      },
-      get savedSessions() {
-        return getParent(self).jbrowse.savedSessions
-      },
-      get savedSessionNames() {
-        return getParent(self).jbrowse.savedSessionNames
-      },
+
       get history() {
         return getParent(self).history
       },
@@ -378,51 +374,6 @@ export default function sessionModelFactory(pluginManager: any) {
 
       addDataset(datasetConf: any) {
         return getParent(self).jbrowse.addDataset(datasetConf)
-      },
-
-      addLinearGenomeViewOfDataset(datasetName: string, initialState = {}) {
-        return this.addViewOfDataset(
-          'LinearGenomeView',
-          datasetName,
-          initialState,
-        )
-      },
-
-      addViewOfDataset(
-        viewType: any,
-        datasetName: string,
-        initialState: any = {},
-      ) {
-        const dataset = self.datasets.find(
-          (s: { name: string }) => readConfObject(s.name) === datasetName,
-        )
-        if (!dataset)
-          throw new Error(
-            `Could not add view of dataset "${datasetName}", dataset name not found`,
-          )
-        initialState.displayRegionsFromAssemblyName = readConfObject(
-          dataset.assembly,
-          'name',
-        )
-        return this.addView(viewType, initialState)
-      },
-
-      addViewFromAnotherView(
-        viewType: any,
-        otherView: any,
-        initialState: {
-          displayedRegions?: IRegion[]
-          displayRegionsFromAssemblyName?: boolean
-        } = {},
-      ) {
-        const state = { ...initialState }
-        if (otherView.displayRegionsFromAssemblyName) {
-          state.displayRegionsFromAssemblyName =
-            otherView.displayRegionsFromAssemblyName
-        } else {
-          state.displayedRegions = otherView.displayedRegions
-        }
-        return this.addView(viewType, state)
       },
 
       addDrawerWidget(
