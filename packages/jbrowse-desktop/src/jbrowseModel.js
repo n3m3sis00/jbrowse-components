@@ -108,17 +108,20 @@ const JBrowseWeb = types
   }))
   // Grouping the "assembly manager" stuff under an `extend` just for
   // code organization
+  .volatile(self => {
+    console.log('self.configuration', self.configuration)
+    return {
+      rpcManager: new RpcManager(
+        pluginManager,
+        self.configuration.rpc,
+        {
+          ElectronRpcDriver: { workerCreationChannel: 'createWindowWorker' },
+        },
+        self.getRefNameMapForAdapter,
+      ),
+      refNameMaps: new Map(),
+    }
+  })
   .extend(assemblyManager)
-  .volatile(self => ({
-    rpcManager: new RpcManager(
-      pluginManager,
-      self.configuration.rpc,
-      {
-        ElectronRpcDriver: { workerCreationChannel: 'createWindowWorker' },
-      },
-      self.getRefNameMapForAdapter,
-    ),
-    refNameMaps: new Map(),
-  }))
 
 export default JBrowseWeb

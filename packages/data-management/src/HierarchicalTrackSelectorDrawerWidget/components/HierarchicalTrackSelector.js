@@ -134,9 +134,10 @@ function HierarchicalTrackSelector({ model }) {
   const filterError =
     model.trackConfigurations(assemblyName) > 0 &&
     model.trackConfigurations(assemblyName).filter(filter).length === 0
-  const dataset = session.datasets.find(
-    s => readConfObject(s, ['assembly', 'name']) === assemblyName,
-  )
+  const dataset = { connections: [] }
+  // session.datasets.find(
+  //   s => readConfObject(s, ['assembly', 'name']) === assemblyName,
+  // )
 
   return (
     <div

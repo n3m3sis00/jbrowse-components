@@ -51,7 +51,7 @@ export default observer(({ session }) => {
         <List
           subheader={<ListSubheader>Choose a session to open</ListSubheader>}
         >
-          {session.savedSessions.map((sessionSnapshot, idx) => {
+          {[].map((sessionSnapshot, idx) => {
             const { views = [] } = sessionSnapshot
             const openTrackCount = views.map(view => (view.tracks || []).length)
             let viewDetails

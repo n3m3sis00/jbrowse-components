@@ -1,5 +1,4 @@
-import { getSnapshot, types, cast, SnapshotIn } from 'mobx-state-tree'
-import RpcManager from './rpc/RpcManager'
+import { types, cast, SnapshotIn } from 'mobx-state-tree'
 import jbrowseModelFactory from './jbrowseModel'
 import sessionModelFactory from './sessionModelFactory'
 
@@ -7,7 +6,7 @@ function rootModelFactory(pluginManager: any, rpcConfig: any) {
   const session = sessionModelFactory(pluginManager)
   return types
     .model('Root', {
-      jbrowse: jbrowseModelFactory(pluginManager),
+      jbrowse: jbrowseModelFactory(pluginManager, rpcConfig),
       session: types.maybe(sessionModelFactory(pluginManager)),
     })
     .actions(self => ({
@@ -23,14 +22,6 @@ function rootModelFactory(pluginManager: any, rpcConfig: any) {
     }))
     .volatile(self => ({
       history: {},
-      rpcManager: new RpcManager(
-        pluginManager,
-        {},
-        rpcConfig,
-        // @ts-ignore
-        self.getRefNameMapForAdapter,
-      ),
-      refNameMaps: new Map(),
     }))
     .actions(self => ({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

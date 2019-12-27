@@ -18,19 +18,15 @@ export default self => ({
     },
     get assemblyData() {
       const assemblyData = observable.map({})
-      for (const datasetConfig of self.datasets) {
-        const assemblyConfig = datasetConfig.assembly
-        const assemblyName = readConfObject(assemblyConfig, 'name')
-        const assemblyInfo = {}
-        if (assemblyConfig.sequence)
-          assemblyInfo.sequence = assemblyConfig.sequence
-        const refNameAliasesConf = readConfObject(
-          assemblyConfig,
-          'refNameAliases',
-        )
-        if (refNameAliasesConf) assemblyInfo.refNameAliases = refNameAliasesConf
-        const aliases = readConfObject(assemblyConfig, 'aliases')
-        assemblyInfo.aliases = aliases
+      for (const asm of self.assemblies) {
+        const { sequence } = asm
+        const assemblyName = readConfObject(asm, 'name')
+        const aliases = readConfObject(asm, 'aliases')
+        const assemblyInfo = {
+          sequence,
+          refNameAliases: readConfObject(asm, 'refNameAliases'),
+          aliases,
+        }
         assemblyData.set(assemblyName, assemblyInfo)
         aliases.forEach((assemblyAlias, idx) => {
           const newAliases = [

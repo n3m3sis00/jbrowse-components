@@ -1,7 +1,8 @@
 {
-  "test": "wtf",
   "configuration": {
-    "highResolutionMode": 2
+    "rpc": {
+      "defaultDriver": "MainThreadRpcDriver"
+    }
   },
   "assemblies": [
     {
