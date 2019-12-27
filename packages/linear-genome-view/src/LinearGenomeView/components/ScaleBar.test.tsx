@@ -3,7 +3,7 @@ import React from 'react'
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { render } from '@testing-library/react'
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { createTestSession } from '@gmod/jbrowse-web/src/rootModel'
+import { createTestSession } from '@gmod/jbrowse-core/rootModel'
 import ScaleBar from './ScaleBar'
 
 describe('ScaleBar genome view component', () => {

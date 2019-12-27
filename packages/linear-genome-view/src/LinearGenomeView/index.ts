@@ -333,7 +333,7 @@ export function stateModelFactory(pluginManager: any) {
 
       activateTrackSelector() {
         if (self.trackSelectorType === 'hierarchical') {
-          const session: any = getSession(self)
+          const session = getSession(self)
           const selector = session.addDrawerWidget(
             'HierarchicalTrackSelectorDrawerWidget',
             'hierarchicalTrackSelector',

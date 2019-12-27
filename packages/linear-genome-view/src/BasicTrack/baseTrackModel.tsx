@@ -122,7 +122,7 @@ const BaseTrack = types
      */
     get rendererType() {
       const track = getContainingView(self)
-      const session: any = getSession(self)
+      const session = getSession(self)
       const RendererType = session.pluginManager.getRendererType(
         self.rendererTypeName,
       )
@@ -140,7 +140,7 @@ const BaseTrack = types
      */
     get adapterType() {
       const adapterConfig = getConf(self, 'adapter')
-      const session: any = getSession(self)
+      const session = getSession(self)
       if (!adapterConfig)
         throw new Error(`no adapter configuration provided for ${self.type}`)
       const adapterType = session.pluginManager.getAdapterType(
@@ -152,7 +152,7 @@ const BaseTrack = types
     },
 
     get showConfigurationButton() {
-      const session: any = getSession(self)
+      const session = getSession(self)
       return !!session.editConfiguration
     },
 
@@ -205,7 +205,7 @@ const BaseTrackWithReferences = types
   )
   .actions(self => ({
     activateConfigurationUI() {
-      const session: any = getSession(self)
+      const session = getSession(self)
       session.editConfiguration(self.configuration)
     },
   }))

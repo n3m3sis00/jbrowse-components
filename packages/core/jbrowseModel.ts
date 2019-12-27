@@ -5,7 +5,7 @@ import { ConfigurationSchema } from './configuration'
 import assemblyManager from './assemblyManager'
 import assemblyConfigSchemasFactory from './assemblyConfigSchemas'
 
-function jbrowseSessionFactory(pluginManager, rpcConfig) {
+function jbrowseSessionFactory(pluginManager: any, rpcConfig: any) {
   const { assemblyConfigSchemas, dispatcher } = assemblyConfigSchemasFactory(
     pluginManager,
   )
@@ -36,19 +36,16 @@ function jbrowseSessionFactory(pluginManager, rpcConfig) {
         ),
         tracks: types.array(pluginManager.pluggableConfigSchemaType('track')),
       })
-      .volatile(self => {
-        console.log(self.configuration)
-        return {
-          rpcManager: new RpcManager(
-            pluginManager,
-            self.configuration.rpc,
-            rpcConfig,
-            // @ts-ignore
-            self.getRefNameMapForAdapter,
-          ),
-          refNameMaps: new Map(),
-        }
-      })
+      .volatile(self => ({
+        rpcManager: new RpcManager(
+          pluginManager,
+          self.configuration.rpc,
+          rpcConfig,
+          // @ts-ignore
+          self.getRefNameMapForAdapter,
+        ),
+        refNameMaps: new Map(),
+      }))
       // Grouping the "assembly manager" stuff under an `extend` just for
       // code organization
       .extend(assemblyManager)

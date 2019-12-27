@@ -133,9 +133,8 @@ const blockBasedTrack = types
        * is probably a feature
        */
       get selectedFeatureId() {
-        const session = getSession(self) as any
-        if (!session) return undefined
-        const { selection } = session
+        const session = getSession(self)
+        const { selection } = session || {}
         // does it quack like a feature?
         if (
           selection &&

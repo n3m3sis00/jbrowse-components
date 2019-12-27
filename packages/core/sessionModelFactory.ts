@@ -62,13 +62,13 @@ export default function sessionModelFactory(pluginManager: any) {
        * code that wants to deal with this should examine it to see what
        * kind of thing it is.
        */
-      selection: undefined,
+      selection: undefined as any,
       /**
        * this is the current "task" that is being performed in the UI.
        * this is usually an object of the form
        * { taskName: "configure", target: thing_being_configured }
        */
-      task: undefined,
+      task: undefined as any,
 
       snackbarMessage: undefined as string | undefined,
     }))

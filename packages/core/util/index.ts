@@ -1,5 +1,11 @@
 import { toByteArray, fromByteArray } from 'base64-js'
-import { getParent, isAlive, IAnyStateTreeNode, getType } from 'mobx-state-tree'
+import {
+  getParent,
+  isAlive,
+  IAnyStateTreeNode,
+  getType,
+  Instance,
+} from 'mobx-state-tree'
 import { inflate, deflate } from 'pako'
 import { Observable, fromEvent } from 'rxjs'
 import fromEntries from 'object.fromentries'
@@ -7,6 +13,7 @@ import { useEffect, useRef, useState } from 'react'
 import merge from 'deepmerge'
 import { Feature } from './simpleFeature'
 import { IRegion, INoAssemblyRegion } from '../mst-types'
+import { SessionStateModel } from '../sessionModelFactory'
 
 if (!Object.fromEntries) {
   fromEntries.shim()
@@ -121,12 +128,14 @@ export function useDebouncedCallback<A extends any[]>(
   }
 }
 
-export function getSession(node: IAnyStateTreeNode): IAnyStateTreeNode {
+export function getSession(
+  node: IAnyStateTreeNode,
+): Instance<SessionStateModel> {
   let currentNode = node
   // @ts-ignore
   while (isAlive(currentNode) && currentNode.pluginManager === undefined)
     currentNode = getParent(currentNode)
-  return currentNode
+  return currentNode as Instance<SessionStateModel>
 }
 
 export function getContainingView(

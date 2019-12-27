@@ -147,7 +147,7 @@ const blockState = types
         }
         const track = getParent(self, 2)
         const view = getContainingView(track)
-        const { rpcManager } = getSession(view) as any
+        const { rpcManager } = getSession(view)
         const { rendererType } = track
         const { renderArgs } = renderBlockData(cast(self))
         rendererType.freeResourcesInClient(
@@ -165,7 +165,7 @@ export type BlockStateModel = typeof blockState
 // not using a flow for this, because the flow doesn't
 // work with autorun
 function renderBlockData(self: Instance<BlockStateModel>) {
-  const { assemblyData, rpcManager } = getSession(self) as any
+  const { assemblyData, rpcManager } = getSession(self)
   const track = getParent(self, 2)
   const assemblyName = getTrackAssemblyName(track)
   const trackAssemblyData =
