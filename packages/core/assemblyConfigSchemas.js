@@ -1,4 +1,4 @@
-import { ConfigurationSchema } from '@gmod/jbrowse-core/configuration'
+import { ConfigurationSchema } from './configuration'
 
 export default function(pluginManager) {
   const BaseAssemblyConfigSchema = ConfigurationSchema('BaseAssembly', {
@@ -17,8 +17,13 @@ export default function(pluginManager) {
   const SequenceAssemblyConfigSchema = ConfigurationSchema(
     'SequenceAssembly',
     {
-      sequence:
-        pluginManager.elementTypes.track.ReferenceSequenceTrack.configSchema,
+      sequence: ConfigurationSchema(
+        'ReferenceSequence',
+        {
+          adapter: pluginManager.pluggableConfigSchemaType('adapter'),
+        },
+        { explicitlyTyped: true },
+      ),
     },
     { baseConfiguration: BaseAssemblyConfigSchema },
   )
@@ -36,8 +41,13 @@ export default function(pluginManager) {
   const AssemblyConfigSchema = ConfigurationSchema(
     'Assembly',
     {
-      sequence:
-        pluginManager.elementTypes.track.ReferenceSequenceTrack.configSchema,
+      sequence: ConfigurationSchema(
+        'ReferenceSequence',
+        {
+          adapter: pluginManager.pluggableConfigSchemaType('adapter'),
+        },
+        { explicitlyTyped: true },
+      ),
       refNameAliases: ConfigurationSchema('RefNameAliases', {
         adapter: pluginManager.pluggableConfigSchemaType('adapter'),
       }),

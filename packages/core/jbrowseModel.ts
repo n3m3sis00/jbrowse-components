@@ -38,10 +38,6 @@ function jbrowseSessionFactory(pluginManager: any, rpcConfig: any) {
           types.union({ dispatcher }, ...assemblyConfigSchemas),
         ),
         tracks: types.array(pluginManager.pluggableConfigSchemaType('track')),
-        defaultSession: types.optional(types.frozen(Session), {
-          name: `New Session`,
-          menuBars: [{ type: 'MainMenuBar' }],
-        }),
         savedSessions: types.array(types.frozen(Session)),
       })
       .actions(self => ({
