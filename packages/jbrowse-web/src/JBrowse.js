@@ -1,8 +1,13 @@
 import { readConfObject } from '@gmod/jbrowse-core/configuration'
 import '@gmod/jbrowse-core/fonts/material-icons.css'
 import { App, theme, FatalErrorDialog } from '@gmod/jbrowse-core/ui'
-
-import { toUrlSafeB64, useDebounce } from '@gmod/jbrowse-core/util'
+import {
+  toUrlSafeB64,
+  fromUrlSafeB64,
+  useDebounce,
+  inDevelopment,
+  mergeConfigs,
+} from '@gmod/jbrowse-core/util'
 import ErrorBoundary from 'react-error-boundary'
 import queryString from 'query-string'
 
@@ -14,13 +19,13 @@ import CssBaseline from '@material-ui/core/CssBaseline'
 import { ThemeProvider } from '@material-ui/styles'
 
 import { observer } from 'mobx-react'
-import { onSnapshot, getSnapshot, resolveIdentifier } from 'mobx-state-tree'
+import { onSnapshot } from 'mobx-state-tree'
 import { UndoManager } from 'mst-middlewares'
 import React, { useEffect, useState } from 'react'
 import 'typeface-roboto'
-import PluginManager from '@gmod/jbrowse-core/PluginManager'
 
 import rootModelFactory from '@gmod/jbrowse-core/rootModel'
+import PluginManager from '@gmod/jbrowse-core/PluginManager'
 import corePlugins from './corePlugins'
 import RenderWorker from './rpc.worker'
 import * as rpcFuncs from './rpcMethods'
@@ -45,7 +50,6 @@ async function parseConfig(configLoc) {
   //     ),
   //   )
   // }
-  console.log(config)
   return config
 }
 
@@ -79,14 +83,16 @@ function useJBrowseWeb(config, initialState, initialConfigSnapshot) {
     }
   }, [config, debouncedUrlSnapshot])
 
+  // This updates savedSession list on the rootModel
+  useEffect(() => {
+    if (rootModel && rootModel.session && debouncedUrlSnapshot) {
+      rootModel.jbrowse.updateSavedSession(debouncedUrlSnapshot)
+    }
+  }, [debouncedUrlSnapshot, rootModel])
   useEffect(() => {
     try {
       if (configSnapshot) {
-        setRootModel(
-          JBrowseRootModel.create({
-            jbrowse: configSnapshot,
-          }),
-        )
+        setRootModel(JBrowseRootModel.create({ jbrowse: configSnapshot }))
       }
     } catch (error) {
       // if it failed to load, it's probably a problem with the saved sessions,
@@ -98,7 +104,7 @@ function useJBrowseWeb(config, initialState, initialConfigSnapshot) {
         )
         setRootModel(
           JBrowseRootModel.create({
-            jbrowse: { ...configSnapshot },
+            jbrowse: { ...configSnapshot, savedSessions: [] },
           }),
         )
       } catch (e) {
@@ -123,7 +129,7 @@ function useJBrowseWeb(config, initialState, initialConfigSnapshot) {
           if (localStorageConfig) {
             setConfigSnapshot(JSON.parse(localStorageConfig))
           }
-          if (config.uri || config.localPath) {
+          if (config) {
             setConfigSnapshot(await parseConfig(config))
           }
         }
@@ -139,13 +145,40 @@ function useJBrowseWeb(config, initialState, initialConfigSnapshot) {
   // finalize rootModel and setLoaded
   useEffect(() => {
     try {
+      const params = new URL(document.location).searchParams
+      const urlSession = params.get('session')
       if (rootModel && rootModel.jbrowse) {
-        rootModel.setDefaultSession()
+        if (urlSession) {
+          const savedSessionIndex = rootModel.jbrowse.savedSessionNames.indexOf(
+            urlSession,
+          )
+          if (savedSessionIndex !== -1) {
+            rootModel.setSession(
+              rootModel.jbrowse.savedSessions[savedSessionIndex],
+            )
+          } else {
+            rootModel.setSession(JSON.parse(fromUrlSafeB64(urlSession)))
+          }
+        } else {
+          const localStorageSession = localStorage.getItem(
+            'jbrowse-web-session',
+          )
+          if (localStorageSession) {
+            rootModel.setSession(JSON.parse(localStorageSession))
+          }
+        }
+        if (!rootModel.session) {
+          if (rootModel.jbrowse && rootModel.jbrowse.savedSessions.length) {
+            const { name } = rootModel.jbrowse.savedSessions[0]
+            rootModel.activateSession(name)
+          } else {
+            rootModel.setDefaultSession()
+          }
+        }
 
         rootModel.setHistory(
           UndoManager.create({}, { targetStore: rootModel.session }),
         )
-        console.log(getSnapshot(rootModel))
         setLoaded(true)
       }
     } catch (e) {
@@ -160,10 +193,6 @@ function useJBrowseWeb(config, initialState, initialConfigSnapshot) {
     if (loaded) {
       window.MODEL = rootModel.session
       window.ROOTMODEL = rootModel
-
-      // poke some things for testing (this stuff will eventually be removed)
-      window.getSnapshot = getSnapshot
-      window.resolveIdentifier = resolveIdentifier
     }
   }, [loaded, rootModel])
 
