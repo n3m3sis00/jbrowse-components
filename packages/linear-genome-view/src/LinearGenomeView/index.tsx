@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import React from 'react'
 import { getConf, readConfObject } from '@gmod/jbrowse-core/configuration'
 import { ElementId, Region, IRegion } from '@gmod/jbrowse-core/mst-types'
 import {
@@ -414,6 +415,10 @@ export function stateModelFactory(pluginManager: any) {
           return true
         }
         return false
+      },
+
+      exportSvg() {
+        return <svg>{self.tracks.map(track => track.renderSvg())}</svg>
       },
 
       /**

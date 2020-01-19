@@ -192,6 +192,10 @@ const BaseTrack = types
     setScrollTop(scrollTop: number) {
       self.scrollTop = scrollTop
     },
+
+    renderSvg() {
+      console.warn('exporting not implemented')
+    },
   }))
 
 export const BaseTrackConfig = generateBaseTrackConfig(BaseTrack)
