@@ -33,6 +33,10 @@ export default (pluginManager, configSchema) =>
           session.showDrawerWidget(featureWidget)
           session.setSelection(feature)
         },
+
+        renderSvg() {
+          console.warn('here!', self.blockState)
+        },
       }))
       .views(self => ({
         /**
