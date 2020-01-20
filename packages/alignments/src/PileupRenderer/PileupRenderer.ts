@@ -8,9 +8,11 @@ import {
   createImageBitmap,
 } from '@gmod/jbrowse-core/util/offscreenCanvasPonyfill'
 import React from 'react'
+// @ts-ignore
+import C2S from 'canvas2svg'
 import { Mismatch } from '../BamAdapter/BamSlightlyLazyFeature'
 
-interface PileupRenderProps {
+export interface PileupRenderProps {
   features: Map<string, Feature>
   layout: any // eslint-disable-line @typescript-eslint/no-explicit-any
   config: any // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -20,6 +22,7 @@ interface PileupRenderProps {
   width: number
   horizontallyFlipped: boolean
   highResolutionScaling: number
+  forceSvg: boolean
 }
 
 interface PileupImageData {
@@ -95,6 +98,7 @@ export default class extends BoxRendererType {
       bpPerPx,
       horizontallyFlipped,
       highResolutionScaling = 1,
+      forceSvg,
     } = props
     if (!layout) throw new Error(`layout required`)
     if (!layout.addRect) throw new Error('invalid layout object')
@@ -123,10 +127,12 @@ export default class extends BoxRendererType {
     if (!(width > 0) || !(height > 0))
       return { height: 0, width: 0, maxHeightReached: false }
 
-    const canvas = createCanvas(
-      Math.ceil(width * highResolutionScaling),
-      height * highResolutionScaling,
-    )
+    const canvas = forceSvg
+      ? C2S(width, height)
+      : createCanvas(
+          Math.ceil(width * highResolutionScaling),
+          height * highResolutionScaling,
+        )
     const ctx = canvas.getContext('2d')
     ctx.scale(highResolutionScaling, highResolutionScaling)
     ctx.font = 'bold 10px Courier New,monospace'
@@ -214,7 +220,10 @@ export default class extends BoxRendererType {
       }
     })
 
-    const imageData = await createImageBitmap(canvas)
+    const imageData = forceSvg
+      ? ctx.getSerializedSvg(true)
+      : await createImageBitmap(canvas)
+
     return {
       imageData,
       height,
@@ -230,11 +239,13 @@ export default class extends BoxRendererType {
       imageData,
       maxHeightReached,
     } = await this.makeImageData(renderProps)
+
     const element = React.createElement(
       this.ReactComponent,
       { ...renderProps, height, width, imageData },
       null,
     )
+
     return {
       element,
       imageData,

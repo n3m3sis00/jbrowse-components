@@ -69,4 +69,8 @@ export {
 } from './BasicTrack/baseTrackModel'
 export { default as blockBasedTrackModel } from './BasicTrack/blockBasedTrackModel'
 export { default as BlockBasedTrack } from './BasicTrack/components/BlockBasedTrack'
+export {
+  renderBlockEffect,
+  renderBlockData,
+} from './BasicTrack/util/serverSideRenderedBlock'
 export { basicTrackConfigSchemaFactory, basicTrackStateModelFactory }

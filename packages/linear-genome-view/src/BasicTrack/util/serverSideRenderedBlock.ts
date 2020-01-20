@@ -164,20 +164,21 @@ export type BlockStateModel = typeof blockState
 // calls the render worker to render the block content
 // not using a flow for this, because the flow doesn't
 // work with autorun
-function renderBlockData(self: Instance<BlockStateModel>) {
+export function renderBlockData(
+  self: Instance<BlockStateModel>,
+  forceSvg = false,
+) {
   const { assemblyData, rpcManager } = getSession(self) as any
   const track = getParent(self, 2)
   const assemblyName = getTrackAssemblyName(track)
   const trackAssemblyData =
     (assemblyData && assemblyData.get(assemblyName)) || {}
-  const trackAssemblyAliases = trackAssemblyData.aliases || []
+  const trackAssemblyAliases = [
+    assemblyName,
+    ...(trackAssemblyData.aliases || []),
+  ]
   let cannotBeRenderedReason
-  if (
-    !(
-      assemblyName === self.region.assemblyName ||
-      trackAssemblyAliases.includes(self.region.assemblyName)
-    )
-  )
+  if (!trackAssemblyAliases.includes(self.region.assemblyName))
     cannotBeRenderedReason = 'region assembly does not match track assembly'
   else cannotBeRenderedReason = track.regionCannotBeRendered(self.region)
   const { renderProps } = track
@@ -210,6 +211,7 @@ function renderBlockData(self: Instance<BlockStateModel>) {
       sessionId: track.id,
       blockKey: self.key,
       timeout: 1000000, // 10000,
+      forceSvg,
     },
   }
 }
@@ -223,7 +225,7 @@ interface RenderProps {
   renderArgs: { [key: string]: any }
 }
 
-async function renderBlockEffect(
+export async function renderBlockEffect(
   self: Instance<BlockStateModel>,
   props: RenderProps,
   allowRefetch = true,

@@ -6,7 +6,34 @@ import ReactPropTypes from 'prop-types'
 import React, { useRef, useState, useEffect } from 'react'
 import runner from 'mobx-run-in-reactive-context'
 
-function PileupRendering(props) {
+interface PileupRenderingProps {
+  blockKey: string
+  trackModel: any
+  width: number
+  height: number
+  region: any
+  bpPerPx: number
+  horizontallyFlipped: boolean
+  forceSvg: boolean
+  imageData: any
+}
+
+type CanvasMouseEvent = React.MouseEvent<HTMLCanvasElement>
+
+function PileupRendering(props: PileupRenderingProps) {
+  const { forceSvg } = props
+  return forceSvg ? (
+    <SvgPileupRendering {...props} />
+  ) : (
+    <CanvasPileupRendering {...props} />
+  )
+}
+
+function SvgPileupRendering(props: PileupRenderingProps) {
+  return props.imageData
+}
+
+function CanvasPileupRendering(props: PileupRenderingProps) {
   const {
     blockKey,
     trackModel,
@@ -24,7 +51,7 @@ function PileupRendering(props) {
     configuration,
   } = trackModel
 
-  const highlightOverlayCanvas = useRef()
+  const highlightOverlayCanvas = useRef<HTMLCanvasElement | null>()
   const [mouseIsDown, setMouseIsDown] = useState(false)
   const [localFeatureIdUnderMouse, setLocalFeatureIdUnderMouse] = useState()
   const [movedDuringLastMouseDown, setMovedDuringLastMouseDown] = useState(
@@ -35,6 +62,7 @@ function PileupRendering(props) {
     const canvas = highlightOverlayCanvas.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
+    if (!ctx) return
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     let rect
     let blockLayout
@@ -95,44 +123,44 @@ function PileupRendering(props) {
     blockLayoutFeatures,
   ])
 
-  function onMouseDown(event) {
+  function onMouseDown(event: CanvasMouseEvent) {
     setMouseIsDown(true)
     setMovedDuringLastMouseDown(false)
     callMouseHandler('MouseDown', event)
   }
 
-  function onMouseEnter(event) {
+  function onMouseEnter(event: CanvasMouseEvent) {
     callMouseHandler('MouseEnter', event)
   }
 
-  function onMouseOut(event) {
+  function onMouseOut(event: CanvasMouseEvent) {
     callMouseHandler('MouseOut', event)
     callMouseHandler('MouseLeave', event)
     trackModel.setFeatureIdUnderMouse(undefined)
     setLocalFeatureIdUnderMouse(undefined)
   }
 
-  function onMouseOver(event) {
+  function onMouseOver(event: CanvasMouseEvent) {
     callMouseHandler('MouseOver', event)
   }
 
-  function onMouseUp(event) {
+  function onMouseUp(event: CanvasMouseEvent) {
     setMouseIsDown(false)
     callMouseHandler('MouseUp', event)
   }
 
-  function onClick(event) {
+  function onClick(event: CanvasMouseEvent) {
     if (!movedDuringLastMouseDown) callMouseHandler('Click', event, true)
   }
 
-  function onMouseLeave(event) {
+  function onMouseLeave(event: CanvasMouseEvent) {
     callMouseHandler('MouseOut', event)
     callMouseHandler('MouseLeave', event)
     trackModel.setFeatureIdUnderMouse(undefined)
     setLocalFeatureIdUnderMouse(undefined)
   }
 
-  function onMouseMove(event) {
+  function onMouseMove(event: CanvasMouseEvent) {
     if (mouseIsDown) setMovedDuringLastMouseDown(true)
     let offsetX = 0
     let offsetY = 0
@@ -170,8 +198,14 @@ function PileupRendering(props) {
    * @param {*} event - the actual mouse event
    * @param {bool} always - call this handler even if there is no feature
    */
-  function callMouseHandler(handlerName, event, always = false) {
+  function callMouseHandler(
+    handlerName: string,
+    event: CanvasMouseEvent,
+    always = false,
+  ) {
+    // @ts-ignore
     const featureHandler = props[`onFeature${handlerName}`]
+    // @ts-ignore
     const canvasHandler = props[`on${handlerName}`]
     if (featureHandler && (always || featureIdUnderMouse)) {
       featureHandler(event, featureIdUnderMouse)

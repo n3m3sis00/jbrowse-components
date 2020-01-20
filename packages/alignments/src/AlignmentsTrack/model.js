@@ -4,8 +4,13 @@ import {
 } from '@gmod/jbrowse-core/configuration'
 import { getParentRenderProps } from '@gmod/jbrowse-core/util/tracks'
 import { getSession } from '@gmod/jbrowse-core/util'
-import { blockBasedTrackModel } from '@gmod/jbrowse-plugin-linear-genome-view'
-import { types } from 'mobx-state-tree'
+import {
+  blockBasedTrackModel,
+  renderBlockEffect,
+  renderBlockData,
+} from '@gmod/jbrowse-plugin-linear-genome-view'
+
+import { types, getSnapshot } from 'mobx-state-tree'
 
 // using a map because it preserves order
 const rendererTypes = new Map([
@@ -34,8 +39,16 @@ export default (pluginManager, configSchema) =>
           session.setSelection(feature)
         },
 
-        renderSvg() {
-          console.warn('here!', self.blockState)
+        async renderSvg() {
+          console.warn('here!', self.blockState, getSnapshot(self.blockState))
+          console.log(self.blockState.values())
+          for (const block of self.blockState.values()) {
+            console.log(block)
+            const data = renderBlockData(block, true)
+            console.log(data)
+            const rendering = await renderBlockEffect(block, data)
+            console.log(rendering, block, getSnapshot(block))
+          }
         },
       }))
       .views(self => ({
