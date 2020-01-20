@@ -31,7 +31,7 @@ import clsx from 'clsx'
 import { observer } from 'mobx-react'
 import { Instance, getRoot, isAlive } from 'mobx-state-tree'
 import ReactPropTypes from 'prop-types'
-import React, { useRef, useState } from 'react'
+import React, { useState } from 'react'
 
 // locals
 import buttonStyles from './buttonStyles'
@@ -509,14 +509,6 @@ const LinearGenomeView = observer((props: { model: LGV }) => {
   const { model } = props
   const { tracks, controlsWidth, error } = model
   const classes = useStyles()
-  const ref = useRef(null)
-
-  function exportSvg() {
-    console.log('here')
-    if (ref.current) {
-      console.log(ref.current)
-    }
-  }
 
   const initialized =
     !!model.displayedRegions.length || !!model.displayRegionsFromAssemblyName
@@ -537,7 +529,7 @@ const LinearGenomeView = observer((props: { model: LGV }) => {
     : {}) as React.CSSProperties
 
   return (
-    <div className={classes.root} ref={ref}>
+    <div className={classes.root}>
       <div className={classes.linearGenomeView} style={style}>
         {!initialized ? (
           <ImportForm model={model} />
