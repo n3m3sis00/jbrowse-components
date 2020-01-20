@@ -44,9 +44,15 @@ export default (pluginManager, configSchema) =>
           console.warn('here!', self.blockState, getSnapshot(self.blockState))
           console.log(self.blockState.values())
           for (const block of self.blockState.values()) {
-            const data = renderBlockData(block, true)
-            const rendering = await renderBlockEffect(block, data)
-            const blob = new Blob([block.html], { type: 'image/svg+xml' })
+            const { rpcManager, renderArgs, rendererType } = renderBlockData(
+              block,
+              true,
+            )
+            const { html } = await rendererType.renderInClient(
+              rpcManager,
+              renderArgs,
+            )
+            const blob = new Blob([html], { type: 'image/svg+xml' })
             saveAs(blob, 'image.svg')
           }
         },

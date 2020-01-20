@@ -413,7 +413,6 @@ export default class extends BoxRendererType {
       : this.makeImageDataCanvas(renderProps)
     const { height, width, imageData, maxHeightReached } = await imageRenderer
 
-    console.log('here1')
     const element = forceSvg
       ? imageData
       : React.createElement(
@@ -421,7 +420,6 @@ export default class extends BoxRendererType {
           { ...renderProps, height, width, imageData },
           null,
         )
-    console.log('here2')
 
     return forceSvg
       ? {
