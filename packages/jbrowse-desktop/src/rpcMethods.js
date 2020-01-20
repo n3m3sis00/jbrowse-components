@@ -206,6 +206,7 @@ async function render(pluginManager, args) {
     renderProps,
     sequenceAdapterType,
     sequenceAdapterConfig,
+    forceSvg,
   } = args
   if (!sessionId) throw new Error('must pass a unique session id')
 
@@ -233,6 +234,7 @@ async function render(pluginManager, args) {
     ...renderProps,
     sessionId,
     dataAdapter,
+    forceSvg,
     regions,
     region,
     originalRegion,
@@ -240,6 +242,7 @@ async function render(pluginManager, args) {
     signal,
     blockKey,
   })
+
   checkAbortSignal(signal)
   return result
 }

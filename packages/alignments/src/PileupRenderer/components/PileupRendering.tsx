@@ -21,19 +21,6 @@ interface PileupRenderingProps {
 type CanvasMouseEvent = React.MouseEvent<HTMLCanvasElement>
 
 function PileupRendering(props: PileupRenderingProps) {
-  const { forceSvg } = props
-  return forceSvg ? (
-    <SvgPileupRendering {...props} />
-  ) : (
-    <CanvasPileupRendering {...props} />
-  )
-}
-
-function SvgPileupRendering(props: PileupRenderingProps) {
-  return props.imageData
-}
-
-function CanvasPileupRendering(props: PileupRenderingProps) {
   const {
     blockKey,
     trackModel,
@@ -42,6 +29,8 @@ function CanvasPileupRendering(props: PileupRenderingProps) {
     region,
     bpPerPx,
     horizontallyFlipped,
+    forceSvg,
+    imageData,
   } = props
   const {
     selectedFeatureId,
@@ -51,7 +40,7 @@ function CanvasPileupRendering(props: PileupRenderingProps) {
     configuration,
   } = trackModel
 
-  const highlightOverlayCanvas = useRef<HTMLCanvasElement | null>()
+  const highlightOverlayCanvas = useRef<HTMLCanvasElement | null>(null)
   const [mouseIsDown, setMouseIsDown] = useState(false)
   const [localFeatureIdUnderMouse, setLocalFeatureIdUnderMouse] = useState()
   const [movedDuringLastMouseDown, setMovedDuringLastMouseDown] = useState(
@@ -216,7 +205,9 @@ function CanvasPileupRendering(props: PileupRenderingProps) {
 
   const canvasWidth = Math.ceil(width)
   // need to call this in render so we get the right observer behavior
-  return (
+  return forceSvg ? (
+    imageData
+  ) : (
     <div
       className="PileupRendering"
       style={{ position: 'relative', width: canvasWidth, height }}
