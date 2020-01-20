@@ -9,7 +9,6 @@ import {
 } from '@gmod/jbrowse-core/util/offscreenCanvasPonyfill'
 import React from 'react'
 // @ts-ignore
-import C2S from 'canvas2svg'
 import { Mismatch } from '../BamAdapter/BamSlightlyLazyFeature'
 
 export interface PileupRenderProps {
@@ -89,7 +88,7 @@ export default class extends BoxRendererType {
     }
   }
 
-  async makeImageData(props: PileupRenderProps) {
+  async makeImageDataSVG(props: PileupRenderProps) {
     const {
       features,
       layout,
@@ -97,9 +96,8 @@ export default class extends BoxRendererType {
       region,
       bpPerPx,
       horizontallyFlipped,
-      highResolutionScaling = 1,
-      forceSvg,
     } = props
+
     if (!layout) throw new Error(`layout required`)
     if (!layout.addRect) throw new Error('invalid layout object')
     const getCoord = (coord: number): number =>
@@ -127,12 +125,190 @@ export default class extends BoxRendererType {
     if (!(width > 0) || !(height > 0))
       return { height: 0, width: 0, maxHeightReached: false }
 
-    const canvas = forceSvg
-      ? C2S(width, height)
-      : createCanvas(
-          Math.ceil(width * highResolutionScaling),
-          height * highResolutionScaling,
-        )
+    const rects: JSX.Element[] = []
+
+    layoutRecords.forEach(feat => {
+      if (feat === null) {
+        return
+      }
+      const { feature, startPx, endPx, topPx, heightPx } = feat
+      const color = readConfObject(config, 'alignmentColor', [feature])
+      rects.push(
+        <rect
+          x={startPx}
+          y={topPx}
+          width={endPx - startPx}
+          height={heightPx}
+          style={{ fill: color }}
+        />,
+      )
+      const mismatches: Mismatch[] =
+        bpPerPx < 10 ? feature.get('mismatches') : feature.get('skips_and_dels')
+
+      const charSize = { width: 7, height: 10 }
+      if (mismatches) {
+        const colorForBase: { [key: string]: string } = {
+          A: '#00bf00',
+          C: '#4747ff',
+          G: '#ffa500',
+          T: '#f00',
+          deletion: 'grey',
+        }
+        for (let i = 0; i < mismatches.length; i += 1) {
+          const mismatch = mismatches[i]
+          const start = feature.get('start') + mismatch.start
+          const end = start + mismatch.length
+          const mismatchStartPx = getCoord(start)
+          const mismatchEndPx = getCoord(end)
+          const widthPx = Math.max(
+            minFeatWidth,
+            Math.abs(mismatchStartPx - mismatchEndPx),
+          )
+
+          if (mismatch.type === 'mismatch' || mismatch.type === 'deletion') {
+            const mismatchColor =
+              colorForBase[
+                mismatch.type === 'deletion' ? 'deletion' : mismatch.base
+              ] || '#888'
+            rects.push(
+              <rect
+                x={mismatchStartPx}
+                y={topPx}
+                width={widthPx}
+                height={heightPx}
+                style={{ fill: mismatchColor }}
+              />,
+            )
+
+            if (widthPx >= charSize.width && heightPx >= charSize.height - 2) {
+              const textColor = mismatch.type === 'deletion' ? 'white' : 'black'
+              rects.push(
+                <text
+                  x={mismatchStartPx + (widthPx - charSize.width) / 2 + 1}
+                  y={topPx + heightPx}
+                  style={{ fill: textColor }}
+                >
+                  {mismatch.base}
+                </text>,
+              )
+            }
+          } else if (mismatch.type === 'insertion') {
+            rects.push(
+              <rect
+                x={mismatchStartPx - 1}
+                y={topPx}
+                width={w}
+                height={heightPx}
+                style={{ fill: 'purple' }}
+              />,
+            )
+            // TODO complete I bar
+
+            if (widthPx >= charSize.width && heightPx >= charSize.height - 2) {
+              rects.push(
+                <text
+                  x={mismatchStartPx + 2}
+                  y={topPx + heightPx}
+                  style={{ fill: 'purple' }}
+                >
+                  ({mismatch.base})
+                </text>,
+              )
+            }
+          } else if (
+            mismatch.type === 'hardclip' ||
+            mismatch.type === 'softclip'
+          ) {
+            const clipColor = mismatch.type === 'hardclip' ? 'red' : 'blue'
+            const pos = mismatchStartPx - 1
+            rects.push(
+              <rect
+                x={mismatchStartPx - 1}
+                y={topPx}
+                width={w}
+                height={heightPx}
+                style={{ fill: clipColor }}
+              />,
+            )
+            if (widthPx >= charSize.width && heightPx >= charSize.height - 2) {
+              rects.push(
+                <text
+                  x={mismatchStartPx + 2}
+                  y={topPx + heightPx}
+                  style={{ fill: clipColor }}
+                >
+                  ({mismatch.base})
+                </text>,
+              )
+            }
+          } else if (mismatch.type === 'skip') {
+            rects.push(
+              <rect
+                x={mismatchStartPx}
+                y={topPx + heightPx / 2}
+                width={w}
+                height={2}
+                style={{ fill: '#333' }}
+              />,
+            )
+          }
+        }
+      }
+    })
+
+    const imageData = <svg>{[...rects]}</svg>
+
+    return {
+      imageData,
+      height,
+      width,
+      maxHeightReached: layout.maxHeightReached,
+    }
+  }
+
+  async makeImageDataCanvas(props: PileupRenderProps) {
+    const {
+      features,
+      layout,
+      config,
+      region,
+      bpPerPx,
+      horizontallyFlipped,
+      highResolutionScaling = 1,
+    } = props
+
+    if (!layout) throw new Error(`layout required`)
+    if (!layout.addRect) throw new Error('invalid layout object')
+    const getCoord = (coord: number): number =>
+      bpToPx(coord, region, bpPerPx, horizontallyFlipped)
+    const pxPerBp = Math.min(1 / bpPerPx, 2)
+    const minFeatWidth = readConfObject(config, 'minSubfeatureWidth')
+    const w = Math.max(minFeatWidth, pxPerBp)
+
+    const layoutRecords = iterMap(
+      features.values(),
+      feature =>
+        this.layoutFeature(
+          feature,
+          layout,
+          config,
+          bpPerPx,
+          region,
+          horizontallyFlipped,
+        ),
+      features.size,
+    )
+
+    const width = (region.end - region.start) / bpPerPx
+    const height = layout.getTotalHeight()
+    if (!(width > 0) || !(height > 0))
+      return { height: 0, width: 0, maxHeightReached: false }
+
+    const canvas = createCanvas(
+      Math.ceil(width * highResolutionScaling),
+      height * highResolutionScaling,
+    )
+
     const ctx = canvas.getContext('2d')
     ctx.scale(highResolutionScaling, highResolutionScaling)
     ctx.font = 'bold 10px Courier New,monospace'
@@ -220,9 +396,7 @@ export default class extends BoxRendererType {
       }
     })
 
-    const imageData = forceSvg
-      ? ctx.getSerializedSvg(true)
-      : await createImageBitmap(canvas)
+    const imageData = await createImageBitmap(canvas)
 
     return {
       imageData,
@@ -233,26 +407,37 @@ export default class extends BoxRendererType {
   }
 
   async render(renderProps: PileupRenderProps) {
-    const {
-      height,
-      width,
-      imageData,
-      maxHeightReached,
-    } = await this.makeImageData(renderProps)
+    const { forceSvg } = renderProps
+    const imageRenderer = forceSvg
+      ? this.makeImageDataSVG(renderProps)
+      : this.makeImageDataCanvas(renderProps)
+    const { height, width, imageData, maxHeightReached } = await imageRenderer
 
-    const element = React.createElement(
-      this.ReactComponent,
-      { ...renderProps, height, width, imageData },
-      null,
-    )
+    console.log('here1')
+    const element = forceSvg
+      ? imageData
+      : React.createElement(
+          this.ReactComponent,
+          { ...renderProps, height, width, imageData },
+          null,
+        )
+    console.log('here2')
 
-    return {
-      element,
-      imageData,
-      height,
-      width,
-      maxHeightReached,
-      layout: renderProps.layout,
-    }
+    return forceSvg
+      ? {
+          element,
+          height,
+          width,
+          maxHeightReached,
+          layout: renderProps.layout,
+        }
+      : {
+          element,
+          imageData,
+          height,
+          width,
+          maxHeightReached,
+          layout: renderProps.layout,
+        }
   }
 }

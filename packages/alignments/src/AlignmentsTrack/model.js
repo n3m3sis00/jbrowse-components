@@ -9,6 +9,7 @@ import {
   renderBlockEffect,
   renderBlockData,
 } from '@gmod/jbrowse-plugin-linear-genome-view'
+import { saveAs } from 'file-saver'
 
 import { types, getSnapshot } from 'mobx-state-tree'
 
@@ -43,11 +44,10 @@ export default (pluginManager, configSchema) =>
           console.warn('here!', self.blockState, getSnapshot(self.blockState))
           console.log(self.blockState.values())
           for (const block of self.blockState.values()) {
-            console.log(block)
             const data = renderBlockData(block, true)
-            console.log(data)
             const rendering = await renderBlockEffect(block, data)
-            console.log(rendering, block, getSnapshot(block))
+            const blob = new Blob([block.html], { type: 'image/svg+xml' })
+            saveAs(blob, 'image.svg')
           }
         },
       }))

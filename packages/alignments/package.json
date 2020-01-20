@@ -12,6 +12,7 @@
     "@gmod/bam": "^1.0.32",
     "@gmod/cram": "^1.5.3",
     "canvas2svg": "^1.0.16",
+    "file-saver": "^2.0.2",
     "generic-filehandle": "^2.0.0",
     "memoize-one": "^5.1.1",
     "mobx-run-in-reactive-context": "^1.0.1"
