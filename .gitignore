@@ -10,3 +10,4 @@ lint.log
 **/umd
 yalc.lock
 .yalc
+*.swo
