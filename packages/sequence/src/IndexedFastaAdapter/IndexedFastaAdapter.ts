@@ -16,7 +16,7 @@ export default class extends BaseAdapter {
     fastaLocation: IFileLocation
     faiLocation: IFileLocation
   }) {
-    super()
+    super(config)
     const { fastaLocation, faiLocation } = config
     if (!fastaLocation) {
       throw new Error('must provide fastaLocation')

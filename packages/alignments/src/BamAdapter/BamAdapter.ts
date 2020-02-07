@@ -51,7 +51,7 @@ export default class extends BaseAdapter {
     bamLocation: IFileLocation
     index: { location: IFileLocation; indexType: string }
   }) {
-    super()
+    super(config)
     const {
       bamLocation,
       index: { location: indexLocation, indexType },
