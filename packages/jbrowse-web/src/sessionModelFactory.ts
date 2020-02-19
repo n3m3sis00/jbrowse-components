@@ -140,8 +140,7 @@ export default function sessionModelFactory(pluginManager: any) {
       },
     }))
     .actions(self => ({
-      updateViewRegions(view: any) {
-        const assemblyName = view.displayRegionsFromAssemblyName
+      updateViewRegions(view: any, assemblyName?: string) {
         if (
           assemblyName &&
           self.assemblyData.get(assemblyName) &&
@@ -188,10 +187,16 @@ export default function sessionModelFactory(pluginManager: any) {
             self.views.forEach(view => {
               if (view.views) {
                 view.views.forEach((subview: any) => {
-                  this.updateViewRegions(subview)
+                  this.updateViewRegions(
+                    subview,
+                    subview.displayRegionsFromAssemblyName,
+                  )
                 })
               } else {
-                this.updateViewRegions(view)
+                this.updateViewRegions(
+                  view,
+                  view.displayRegionsFromAssemblyName,
+                )
               }
             })
           }),
