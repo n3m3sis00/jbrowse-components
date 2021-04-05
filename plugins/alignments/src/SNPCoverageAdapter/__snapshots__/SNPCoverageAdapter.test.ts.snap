@@ -1,0 +1,501 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SNP adapter can fetch features from volvox.bam using bam subadapter 1`] = `
+Array [
+  Object {
+    "end": 1003,
+    "refName": "ctgA",
+    "score": 18,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 17,
+        "strands": Object {
+          "+": 10,
+          "-": 7,
+        },
+      },
+      Object {
+        "base": "T",
+        "score": 1,
+        "strands": Object {
+          "-": 1,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 18,
+      },
+    ],
+    "start": 1002,
+    "uniqueId": "test-0-1002",
+  },
+  Object {
+    "end": 1004,
+    "refName": "ctgA",
+    "score": 18,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 18,
+        "strands": Object {
+          "+": 10,
+          "-": 8,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 18,
+      },
+    ],
+    "start": 1003,
+    "uniqueId": "test-0-1003",
+  },
+  Object {
+    "end": 1005,
+    "refName": "ctgA",
+    "score": 18,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 17,
+        "strands": Object {
+          "+": 10,
+          "-": 7,
+        },
+      },
+      Object {
+        "base": "A",
+        "score": 1,
+        "strands": Object {
+          "-": 1,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 18,
+      },
+    ],
+    "start": 1004,
+    "uniqueId": "test-0-1004",
+  },
+  Object {
+    "end": 1006,
+    "refName": "ctgA",
+    "score": 19,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 19,
+        "strands": Object {
+          "+": 10,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 19,
+      },
+    ],
+    "start": 1005,
+    "uniqueId": "test-0-1005",
+  },
+  Object {
+    "end": 1007,
+    "refName": "ctgA",
+    "score": 20,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 17,
+        "strands": Object {
+          "+": 8,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "A",
+        "score": 2,
+        "strands": Object {
+          "+": 2,
+        },
+      },
+      Object {
+        "base": "T",
+        "score": 1,
+        "strands": Object {
+          "+": 1,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 20,
+      },
+    ],
+    "start": 1006,
+    "uniqueId": "test-0-1006",
+  },
+  Object {
+    "end": 1008,
+    "refName": "ctgA",
+    "score": 20,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 20,
+        "strands": Object {
+          "+": 11,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 20,
+      },
+    ],
+    "start": 1007,
+    "uniqueId": "test-0-1007",
+  },
+  Object {
+    "end": 1009,
+    "refName": "ctgA",
+    "score": 20,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 19,
+        "strands": Object {
+          "+": 10,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "T",
+        "score": 1,
+        "strands": Object {
+          "+": 1,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 20,
+      },
+    ],
+    "start": 1008,
+    "uniqueId": "test-0-1008",
+  },
+  Object {
+    "end": 1010,
+    "refName": "ctgA",
+    "score": 20,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 20,
+        "strands": Object {
+          "+": 11,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 20,
+      },
+    ],
+    "start": 1009,
+    "uniqueId": "test-0-1009",
+  },
+  Object {
+    "end": 1011,
+    "refName": "ctgA",
+    "score": 20,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 20,
+        "strands": Object {
+          "+": 11,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 20,
+      },
+    ],
+    "start": 1010,
+    "uniqueId": "test-0-1010",
+  },
+  Object {
+    "end": 1012,
+    "refName": "ctgA",
+    "score": 19,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 19,
+        "strands": Object {
+          "+": 10,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 19,
+      },
+    ],
+    "start": 1011,
+    "uniqueId": "test-0-1011",
+  },
+]
+`;
+
+exports[`SNP adapter can fetch features from volvox.cram using cram subadapter 1`] = `
+Array [
+  Object {
+    "end": 1003,
+    "refName": "ctgA",
+    "score": 18,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 17,
+        "strands": Object {
+          "+": 10,
+          "-": 7,
+        },
+      },
+      Object {
+        "base": "T",
+        "score": 1,
+        "strands": Object {
+          "-": 1,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 18,
+      },
+    ],
+    "start": 1002,
+    "uniqueId": "test-0-1002",
+  },
+  Object {
+    "end": 1004,
+    "refName": "ctgA",
+    "score": 18,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 18,
+        "strands": Object {
+          "+": 10,
+          "-": 8,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 18,
+      },
+    ],
+    "start": 1003,
+    "uniqueId": "test-0-1003",
+  },
+  Object {
+    "end": 1005,
+    "refName": "ctgA",
+    "score": 18,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 17,
+        "strands": Object {
+          "+": 10,
+          "-": 7,
+        },
+      },
+      Object {
+        "base": "C",
+        "score": 1,
+        "strands": Object {
+          "-": 1,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 18,
+      },
+    ],
+    "start": 1004,
+    "uniqueId": "test-0-1004",
+  },
+  Object {
+    "end": 1006,
+    "refName": "ctgA",
+    "score": 19,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 19,
+        "strands": Object {
+          "+": 10,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 19,
+      },
+    ],
+    "start": 1005,
+    "uniqueId": "test-0-1005",
+  },
+  Object {
+    "end": 1007,
+    "refName": "ctgA",
+    "score": 20,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 17,
+        "strands": Object {
+          "+": 8,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "A",
+        "score": 2,
+        "strands": Object {
+          "+": 2,
+        },
+      },
+      Object {
+        "base": "T",
+        "score": 1,
+        "strands": Object {
+          "+": 1,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 20,
+      },
+    ],
+    "start": 1006,
+    "uniqueId": "test-0-1006",
+  },
+  Object {
+    "end": 1008,
+    "refName": "ctgA",
+    "score": 20,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 20,
+        "strands": Object {
+          "+": 11,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 20,
+      },
+    ],
+    "start": 1007,
+    "uniqueId": "test-0-1007",
+  },
+  Object {
+    "end": 1009,
+    "refName": "ctgA",
+    "score": 20,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 19,
+        "strands": Object {
+          "+": 10,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "T",
+        "score": 1,
+        "strands": Object {
+          "+": 1,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 20,
+      },
+    ],
+    "start": 1008,
+    "uniqueId": "test-0-1008",
+  },
+  Object {
+    "end": 1010,
+    "refName": "ctgA",
+    "score": 20,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 20,
+        "strands": Object {
+          "+": 11,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 20,
+      },
+    ],
+    "start": 1009,
+    "uniqueId": "test-0-1009",
+  },
+  Object {
+    "end": 1011,
+    "refName": "ctgA",
+    "score": 20,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 20,
+        "strands": Object {
+          "+": 11,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 20,
+      },
+    ],
+    "start": 1010,
+    "uniqueId": "test-0-1010",
+  },
+  Object {
+    "end": 1012,
+    "refName": "ctgA",
+    "score": 19,
+    "snpinfo": Array [
+      Object {
+        "base": "reference",
+        "score": 19,
+        "strands": Object {
+          "+": 10,
+          "-": 9,
+        },
+      },
+      Object {
+        "base": "total",
+        "score": 19,
+      },
+    ],
+    "start": 1011,
+    "uniqueId": "test-0-1011",
+  },
+]
+`;

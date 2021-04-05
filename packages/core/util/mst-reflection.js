@@ -1,12 +1,14 @@
+/* eslint-disable no-underscore-dangle */
 import {
   isOptionalType,
   isUnionType,
   isArrayType,
   isMapType,
+  isLateType,
 } from 'mobx-state-tree'
 
 /**
- * get the inner type of an MST optional or array type object
+ * get the inner type of an MST optional, array, or late type object
  *
  * @param {IModelType} type
  * @returns {IModelType}
@@ -14,11 +16,11 @@ import {
 export function getSubType(type) {
   let t
   if (isOptionalType(type)) {
-    // eslint-disable-next-line no-underscore-dangle
     t = type._subtype || type.type
   } else if (isArrayType(type) || isMapType(type)) {
-    // eslint-disable-next-line no-underscore-dangle
     t = type._subtype || type._subType || type.subType
+  } else if (typeof type.getSubType === 'function') {
+    return type.getSubType()
   } else {
     throw new TypeError('unsupported mst type')
   }
@@ -36,8 +38,11 @@ export function getSubType(type) {
  */
 export function getUnionSubTypes(unionType) {
   if (!isUnionType(unionType)) throw new TypeError('not an MST union type')
-  // eslint-disable-next-line no-underscore-dangle
-  const t = unionType._types || unionType.types
+  const t =
+    unionType._types ||
+    unionType.types ||
+    getSubType(unionType)._types ||
+    getSubType(unionType).types
   if (!t) {
     // debugger
     throw new Error('failed to extract subtypes from mst union')
@@ -62,9 +67,9 @@ export function getPropertyType(type, propertyName) {
  * @param {*} type
  */
 export function getDefaultValue(type) {
-  if (!isOptionalType(type))
+  if (!isOptionalType(type)) {
     throw new TypeError('type must be an optional type')
-  // eslint-disable-next-line no-underscore-dangle
+  }
   return type._defaultValue || type.defaultValue
 }
 
@@ -73,4 +78,15 @@ export function getEnumerationValues(type) {
   const subtypes = getUnionSubTypes(type)
   // the subtypes should all be literals with a value member
   return subtypes.map(t => t.value)
+}
+
+export function resolveLateType(maybeLate) {
+  if (
+    !isUnionType(maybeLate) &&
+    !isArrayType(maybeLate) &&
+    isLateType(maybeLate)
+  ) {
+    return maybeLate.getSubType()
+  }
+  return maybeLate
 }

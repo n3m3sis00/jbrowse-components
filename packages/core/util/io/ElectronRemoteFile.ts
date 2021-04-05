@@ -15,7 +15,13 @@ declare global {
     electron?: import('electron').AllElectron
   }
 }
-const { electron } = window
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const { electron } = typeof window !== 'undefined' ? window : ({} as any)
+
+class ElectronRemoteFileError extends Error {
+  public status: number | undefined
+}
 
 interface SerializedResponse {
   buffer: Buffer
@@ -61,13 +67,13 @@ export default class ElectronRemoteFile implements GenericFilehandle {
       return
     }
 
-    const fetch = opts.fetch || window.fetch
+    const fetcharg = opts.fetch || window.fetch
     if (!fetch) {
       throw new TypeError(
         `no fetch function supplied, and none found in global environment`,
       )
     }
-    this.fetch = fetch
+    this.fetch = fetcharg
 
     if (opts.overrides) {
       this.baseOverrides = opts.overrides
@@ -111,8 +117,10 @@ export default class ElectronRemoteFile implements GenericFilehandle {
       throw new Error(
         'a fetch function must be available unless using a file:// url',
       )
-    if (!this.url) throw new Error('no URL specified')
-    const fetch = this.nodeFetchFallback ? this.nodeFetch : this.fetch
+    if (!this.url) {
+      throw new Error('no URL specified')
+    }
+    const myfetch = this.nodeFetchFallback ? this.nodeFetch : this.fetch
     const { headers = {}, signal, overrides = {} } = opts
     const requestOptions = {
       headers,
@@ -125,7 +133,7 @@ export default class ElectronRemoteFile implements GenericFilehandle {
     }
     let response
     try {
-      response = await fetch(this.url, requestOptions)
+      response = await myfetch(this.url, requestOptions)
     } catch (error) {
       if (!isAbortException(error)) {
         if (this.nodeFetchFallback) {
@@ -207,15 +215,18 @@ export default class ElectronRemoteFile implements GenericFilehandle {
     }
     const response = await this.getFetch(opts)
     if (response.status !== 200) {
-      throw Object.assign(
-        new Error(`HTTP ${response.status} fetching ${this.url}`),
-        {
-          status: response.status,
-        },
+      const err = new ElectronRemoteFileError(
+        `HTTP ${response.status} fetching ${this.url}`,
       )
+      err.status = response.status
+      throw err
     }
-    if (encoding === 'utf8') return response.text()
-    if (encoding) throw new Error(`unsupported encoding: ${encoding}`)
+    if (encoding === 'utf8') {
+      return response.text()
+    }
+    if (encoding) {
+      throw new Error(`unsupported encoding: ${encoding}`)
+    }
     return this.getBufferFromResponse(response)
   }
 

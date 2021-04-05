@@ -1,263 +1,182 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ThemeOptions } from '@material-ui/core'
+import { ThemeProvider } from '@material-ui/core/styles'
 import { renderToString } from 'react-dom/server'
-import { filter, ignoreElements, tap } from 'rxjs/operators'
-import BaseAdapter from '../../BaseAdapter'
-import { IRegion } from '../../mst-types'
-import { readConfObject } from '../../configuration'
-import { checkAbortSignal, iterMap } from '../../util'
-import SimpleFeature, { Feature } from '../../util/simpleFeature'
-import RendererType from './RendererType'
-import SerializableFilterChain from './util/serializableFilterChain'
+import React from 'react'
+import {
+  SnapshotOrInstance,
+  SnapshotIn,
+  getSnapshot,
+  isStateTreeNode,
+} from 'mobx-state-tree'
+import { checkAbortSignal } from '../../util'
+import RendererType, { RenderProps, RenderResults } from './RendererType'
+import SerializableFilterChain, {
+  SerializedFilterChain,
+} from './util/serializableFilterChain'
+import { AnyConfigurationModel } from '../../configuration/configurationSchema'
+import RpcManager from '../../rpc/RpcManager'
+import { createJBrowseTheme } from '../../ui'
+import ServerSideRenderedContent from './ServerSideRenderedContent'
 
-interface BaseRenderArgs {
-  blockKey: string
+interface BaseRenderArgs extends RenderProps {
   sessionId: string
+  // Note that signal serialization happens after serializeArgsInClient and
+  // deserialization happens before deserializeArgsInWorker
   signal?: AbortSignal
-  filters?: any
-  dataAdapter: BaseAdapter
-  bpPerPx: number
-  config: Record<string, any>
-  renderProps: { trackModel: any }
+  theme: ThemeOptions
 }
 
-interface MultiRegionRenderArgs extends BaseRenderArgs {
-  regions: IRegion[]
-  originalRegions: IRegion[]
+export interface RenderArgs extends BaseRenderArgs {
+  config: SnapshotOrInstance<AnyConfigurationModel>
+  filters: SerializableFilterChain
 }
 
-interface SingleRegionRenderArgs extends BaseRenderArgs {
-  region: IRegion
-  originalRegion: IRegion
+export interface RenderArgsSerialized extends BaseRenderArgs {
+  statusCallback?: Function
+  config: SnapshotIn<AnyConfigurationModel>
+  filters: SerializedFilterChain
+}
+export interface RenderArgsDeserialized extends BaseRenderArgs {
+  config: AnyConfigurationModel
+  filters: SerializableFilterChain
 }
 
-type RenderArgs = MultiRegionRenderArgs | SingleRegionRenderArgs
+export type { RenderResults }
+
+export interface ResultsSerialized extends Omit<RenderResults, 'reactElement'> {
+  html: string
+}
+
+export type ResultsDeserialized = RenderResults
 
 export default class ServerSideRenderer extends RendererType {
   /**
-   * directly modifies the render arguments to prepare
-   * them to be serialized and sent to the worker.
+   * directly modifies the render arguments to prepare them to be serialized and
+   * sent to the worker.
    *
-   * the base class replaces the `renderProps.trackModel` param
-   * (which on the client is a MST model) with a stub
-   * that only contains the `selectedFeature`, since
-   * this is the only part of the track model that most
-   * renderers read.
-   *
-   * @param {object} args the arguments passed to render
-   * @returns {object} the same object
+   * @param args - the arguments passed to render
+   * @returns the same object
    */
-  serializeArgsInClient(args: RenderArgs) {
-    const { trackModel } = args.renderProps
-    if (trackModel) {
-      args.renderProps = {
-        // @ts-ignore
-        blockKey: args.blockKey,
-        ...args.renderProps,
-        trackModel: {
-          id: trackModel.id,
-          selectedFeatureId: trackModel.selectedFeatureId,
-        },
-      }
+  serializeArgsInClient(args: RenderArgs): RenderArgsSerialized {
+    return {
+      ...args,
+      config: isStateTreeNode(args.config)
+        ? getSnapshot(args.config)
+        : args.config,
+      filters: args.filters && args.filters.toJSON().filters,
     }
-    if ((args as MultiRegionRenderArgs).regions) {
-      const r = args as MultiRegionRenderArgs
-      return { ...r, regions: [...r.regions] }
-    }
-
-    const r = args as SingleRegionRenderArgs
-    return { ...r, region: { ...r.region } }
   }
 
-  deserializeResultsInClient(result: { features: any }, args: RenderArgs) {
-    // deserialize some of the results that came back from the worker
-    const featuresMap = new Map<string, Feature>()
-    result.features.forEach((j: any) => {
-      const f = SimpleFeature.fromJSON({ data: j })
-      featuresMap.set(String(f.id()), f)
+  /**
+   * Deserialize the render results from the worker in the client. Includes
+   * hydrating of the React HTML string.
+   *
+   * @param results - the results of the render
+   * @param args - the arguments passed to render
+   */
+  deserializeResultsInClient(
+    results: ResultsSerialized,
+    args: RenderArgs,
+  ): ResultsDeserialized {
+    const reactElement = React.createElement(ServerSideRenderedContent, {
+      ...args,
+      ...results,
+      RenderingComponent: this.ReactComponent,
     })
-    result.features = featuresMap
-    // @ts-ignore
-    result.blockKey = args.blockKey
-    return result
+    delete results.html
+    return { ...results, reactElement }
   }
 
   /**
-   * directly modifies the passed arguments object to
-   * inflate arguments as necessary. called in the worker process.
-   * @param {object} args the converted arguments to modify
-   */
-  deserializeArgsInWorker(args: Record<string, any>) {
-    // @ts-ignore
-    if (this.configSchema) {
-      // @ts-ignore
-      const config = this.configSchema.create(args.config || {})
-      args.config = config
-    }
-  }
-
-  /**
+   * modifies the passed arguments object to inflate arguments as necessary.
+   * called in the worker process.
    *
-   * @param {object} result object containing the results of calling the `render` method
-   * @param {Map} features Map of feature.id() -> feature
+   * @param args - the converted arguments to modify
+   */
+  deserializeArgsInWorker(args: RenderArgsSerialized): RenderArgsDeserialized {
+    const deserialized = ({ ...args } as unknown) as RenderArgsDeserialized
+    const config = this.configSchema.create(args.config || {}, {
+      pluginManager: this.pluginManager,
+    })
+    deserialized.config = config
+    deserialized.filters = new SerializableFilterChain({
+      filters: args.filters,
+    })
+
+    return deserialized
+  }
+
+  /**
+   * Serialize results of the render to send them to the client. Includes
+   * rendering React to an HTML string.
+   *
+   * @param results - object containing the results of calling the `render`
+   * method
+   * @param args - deserialized render args
    */
   serializeResultsInWorker(
-    result: Record<string, any>,
-    features: Map<string, Feature>,
-    args: RenderArgs,
-  ) {
-    result.features = iterMap(features.values(), f =>
-      f.toJSON ? f.toJSON() : f,
+    results: RenderResults,
+    args: RenderArgsDeserialized,
+  ): ResultsSerialized {
+    const html = renderToString(
+      React.createElement(
+        ThemeProvider,
+        // @ts-ignore
+        { theme: createJBrowseTheme(args.theme) },
+        results.reactElement,
+      ),
     )
+    delete results.reactElement
+    return { ...results, html }
   }
 
   /**
-   * Render method called on the client. Serializes args, then
-   * calls `render` with the RPC manager.
-   */
-  async renderInClient(rpcManager: any, args: RenderArgs) {
-    const serializedArgs = this.serializeArgsInClient(args)
-
-    const stateGroupName = args.sessionId
-    const result = await rpcManager.call(
-      stateGroupName,
-      'render',
-      serializedArgs,
-    )
-    // const result = await renderRegionWithWorker(session, serializedArgs)
-
-    this.deserializeResultsInClient(result, args)
-    return result
-  }
-
-  getExpandedGlyphRegion(region: IRegion, renderArgs: RenderArgs) {
-    if (!region) return region
-    const { bpPerPx, config } = renderArgs
-    const maxFeatureGlyphExpansion = readConfObject(
-      config,
-      'maxFeatureGlyphExpansion',
-    )
-    if (!maxFeatureGlyphExpansion) return region
-    const bpExpansion = Math.round(maxFeatureGlyphExpansion * bpPerPx)
-    return {
-      ...region,
-      start: Math.floor(Math.max(region.start - bpExpansion, 0)),
-      end: Math.ceil(region.end + bpExpansion),
-    }
-  }
-
-  /**
-   * use the dataAdapter to fetch the features to be rendered
+   * Render method called on the client. Serializes args, then calls
+   * "CoreRender" with the RPC manager.
    *
-   * @param {object} renderArgs
-   * @returns {Map} of features as { id => feature, ... }
+   * @param rpcManager - RPC mananger
+   * @param args - render args
    */
-  async getFeatures(renderArgs: RenderArgs) {
-    const { dataAdapter, signal, bpPerPx } = renderArgs
-    const features = new Map()
-
-    let regions
-    let originalRegions
-
-    if ((renderArgs as SingleRegionRenderArgs).region) {
-      const r = renderArgs as SingleRegionRenderArgs
-      regions = [r.region]
-      originalRegions = [r.originalRegion]
-    } else {
-      const r = renderArgs as MultiRegionRenderArgs
-      regions = r.regions
-      originalRegions = r.originalRegions
-    }
-
-    if (!regions || regions.length === 0) {
-      return features
-    }
-
-    const requestRegions = regions.map((r: IRegion) => {
-      // make sure the requested region's start and end are integers, if
-      // there is a region specification.
-      const requestRegion = { ...r }
-      if (requestRegion.start) {
-        requestRegion.start = Math.floor(requestRegion.start)
-      }
-      if (requestRegion.end) {
-        requestRegion.end = Math.floor(requestRegion.end)
-      }
-      return requestRegion
-    })
-
-    const featureObservable =
-      requestRegions.length === 1
-        ? dataAdapter.getFeaturesInRegion(
-            this.getExpandedGlyphRegion(requestRegions[0], renderArgs),
-            {
-              signal,
-              bpPerPx,
-              originalRegion: originalRegions[0],
-            },
-          )
-        : dataAdapter.getFeaturesInMultipleRegions(requestRegions, {
-            signal,
-            bpPerPx,
-            originalRegions,
-          })
-
-    await featureObservable
-      .pipe(
-        tap(() => checkAbortSignal(signal)),
-        filter(feature => this.featurePassesFilters(renderArgs, feature)),
-        tap(feature => {
-          const id = feature.id()
-          if (!id) throw new Error(`invalid feature id "${id}"`)
-          features.set(id, feature)
-        }),
-        ignoreElements(),
-      )
-      .toPromise()
-
-    return features
+  async renderInClient(rpcManager: RpcManager, args: RenderArgs) {
+    return rpcManager.call(args.sessionId, 'CoreRender', args) as Promise<
+      ResultsSerialized
+    >
   }
 
   /**
-   * @param {object} renderArgs
-   * @param {FeatureI} feature
-   * @returns {boolean} true if this feature passes all configured filters
+   * Render method called on the worker. `render` is called here in server-side
+   * rendering
+   *
+   * @param args - serialized render args
    */
-  featurePassesFilters(renderArgs: RenderArgs, feature: Feature) {
-    const filterChain = new SerializableFilterChain({
-      filters: renderArgs.filters,
-    })
-    return filterChain.passes(feature, renderArgs)
-  }
+  async renderInWorker(args: RenderArgsSerialized): Promise<ResultsSerialized> {
+    const { signal, statusCallback = () => {} } = args
+    checkAbortSignal(signal)
+    const deserializedArgs = this.deserializeArgsInWorker(args)
 
-  // render method called on the worker
-  async renderInWorker(args: RenderArgs) {
-    checkAbortSignal(args.signal)
-    this.deserializeArgsInWorker(args)
-
-    const features = await this.getFeatures(args)
-    checkAbortSignal(args.signal)
-
-    const results = await this.render({ ...args, features })
-    checkAbortSignal(args.signal)
-    // @ts-ignore
-    results.html = renderToString(results.element)
-    delete results.element
+    checkAbortSignal(signal)
+    statusCallback('Rendering plot')
+    const results = await this.render(deserializedArgs)
+    checkAbortSignal(signal)
 
     // serialize the results for passing back to the main thread.
     // these will be transmitted to the main process, and will come out
     // as the result of renderRegionWithWorker.
-    this.serializeResultsInWorker(results, features, args)
-    return results
+    statusCallback('Serializing results')
+    const serialized = this.serializeResultsInWorker(results, deserializedArgs)
+    statusCallback('')
+    return serialized
   }
 
-  freeResourcesInClient(rpcManager: any, args: RenderArgs) {
+  async freeResourcesInClient(rpcManager: RpcManager, args: RenderArgs) {
     const serializedArgs = this.serializeArgsInClient(args)
 
-    const stateGroupName = args.sessionId
-    return rpcManager.call(stateGroupName, 'freeResources', serializedArgs)
-  }
-
-  freeResourcesInWorker(args: RenderArgs) {
-    /* stub method */
+    const freed = this.freeResources()
+    const freedRpc = (await rpcManager.call(
+      args.sessionId,
+      'CoreFreeResources',
+      serializedArgs,
+    )) as number
+    return freed + freedRpc
   }
 }

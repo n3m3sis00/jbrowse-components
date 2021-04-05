@@ -1,0 +1,41 @@
+{
+  "name": "@jbrowse/development-tools",
+  "version": "1.0.3",
+  "description": "Tools to help with developing and building JBrowse 2 plugins",
+  "keywords": [
+    "jbrowse",
+    "jbrowse2"
+  ],
+  "license": "Apache-2.0",
+  "homepage": "https://jbrowse.org",
+  "bugs": "https://github.com/GMOD/jbrowse-components/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GMOD/jbrowse-components.git",
+    "directory": "packages/development-tools"
+  },
+  "author": "JBrowse Team",
+  "main": "index.js",
+  "files": [
+    "patches/",
+    "postinstall.js"
+  ],
+  "bin": {
+    "jbrowse-plugin-postinstall": "./postinstall.js"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {},
+  "dependencies": {
+    "cross-spawn": "^7.0.3",
+    "patch-package": "^6.2.2",
+    "tsdx": "0.14.1"
+  },
+  "peerDependencies": {
+    "@jbrowse/core": "^1.0.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

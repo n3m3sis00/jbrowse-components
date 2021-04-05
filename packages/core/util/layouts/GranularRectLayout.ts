@@ -1,3 +1,4 @@
+import { ObservableMap } from 'mobx'
 import { objectFromEntries } from '../index'
 import {
   RectTuple,
@@ -35,8 +36,6 @@ interface RowState<T> {
 }
 // a single row in the layout
 class LayoutRow<T> {
-  private rowNumber: number
-
   private padding: number
 
   private allFilled?: Record<string, T> | boolean
@@ -45,8 +44,7 @@ class LayoutRow<T> {
 
   private rowState?: RowState<T>
 
-  constructor(rowNumber: number) {
-    this.rowNumber = rowNumber
+  constructor() {
     this.padding = 1
     this.widthLimit = 1000000
 
@@ -174,8 +172,9 @@ class LayoutRow<T> {
     // if (oRight > this.rowState.bits.length) debugger
     if (oRight - oLeft > maxFeaturePitchWidth) {
       console.warn(
-        `Layout X pitch set too low, feature spans ${oRight -
-          oLeft} bits in a single row.`,
+        `Layout X pitch set too low, feature spans ${
+          oRight - oLeft
+        } bits in a single row.`,
         rect,
         data,
       )
@@ -286,12 +285,6 @@ class LayoutRow<T> {
 }
 
 export default class GranularRectLayout<T> implements BaseLayout<T> {
-  /**
-   * @param args.pitchX  layout grid pitch in the X direction
-   * @param args.pitchY  layout grid pitch in the Y direction
-   * @param args.maxHeight  maximum layout height, default Infinity (no max)
-   */
-
   private pitchX: number
 
   private pitchY: number
@@ -300,9 +293,9 @@ export default class GranularRectLayout<T> implements BaseLayout<T> {
 
   private bitmap: LayoutRow<T>[]
 
-  private rectangles: Map<string, Rectangle<T>>
+  private rectangles: ObservableMap<string, Rectangle<T>>
 
-  private maxHeightReached: boolean
+  public maxHeightReached: boolean
 
   private maxHeight: number
 
@@ -310,18 +303,27 @@ export default class GranularRectLayout<T> implements BaseLayout<T> {
 
   private pTotalHeight: number
 
-  constructor(args: {
-    pitchX: number | undefined
-    pitchY: number | undefined
-    maxHeight: number | undefined
-    displayMode: string | undefined
-  }) {
-    this.pitchX = args.pitchX || 10
-    this.pitchY = args.pitchY || 10
-    this.hardRowLimit = 3000
+  constructor({
+    pitchX = 10,
+    pitchY = 10,
+    maxHeight = 10000,
+    hardRowLimit = 3000,
+    displayMode = 'normal',
+  }: {
+    /** layout grid pitch in the X direction */
+    pitchX?: number
+    /** layout grid pitch in the Y direction */
+    pitchY?: number
+    /** maximum layout height, default Infinity (no max) */
+    maxHeight?: number
+    displayMode?: string
+    hardRowLimit?: number
+  } = {}) {
+    this.pitchX = pitchX
+    this.pitchY = pitchY
+    this.hardRowLimit = hardRowLimit
     this.maxHeightReached = false
-
-    this.displayMode = args.displayMode || 'normal'
+    this.displayMode = displayMode
 
     // reduce the pitchY to try and pack the features tighter
     if (this.displayMode === 'compact') {
@@ -330,13 +332,13 @@ export default class GranularRectLayout<T> implements BaseLayout<T> {
     }
 
     this.bitmap = []
-    this.rectangles = new Map()
-    this.maxHeight = Math.ceil((args.maxHeight || 10000) / this.pitchY)
+    this.rectangles = new ObservableMap()
+    this.maxHeight = Math.ceil(maxHeight / this.pitchY)
     this.pTotalHeight = 0 // total height, in units of bitmap squares (px/pitchY)
   }
 
   /**
-   * @returns {Number} top position for the rect, or Null if laying
+   * @returns top position for the rect, or Null if laying
    *  out the rect would exceed maxHeight
    */
   addRect(
@@ -419,11 +421,12 @@ export default class GranularRectLayout<T> implements BaseLayout<T> {
     if (!row) {
       if (y > this.hardRowLimit) {
         throw new Error(
-          `layout hard limit (${this.hardRowLimit *
-            this.pitchY}px) exceeded, aborting layout`,
+          `layout hard limit (${
+            this.hardRowLimit * this.pitchY
+          }px) exceeded, aborting layout`,
         )
       }
-      row = new LayoutRow(y)
+      row = new LayoutRow()
       bitmap[y] = row
     }
     return row

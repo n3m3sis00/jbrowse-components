@@ -1,4 +1,8 @@
-import BaseRpcDriver from './BaseRpcDriver'
+/* eslint-disable no-await-in-loop */
+import shortid from 'shortid'
+import BaseRpcDriver, { RpcDriverConstructorArgs } from './BaseRpcDriver'
+import PluginManager from '../PluginManager'
+import { PluginDefinition } from '../PluginLoader'
 
 declare global {
   interface Window {
@@ -8,105 +12,155 @@ declare global {
     electron?: import('electron').AllElectron
   }
 }
-const { electronBetterIpc = {}, electron } = window
+const { electronBetterIpc = {}, electron } =
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  typeof window !== 'undefined' ? window : ({} as any)
+
+interface ElectronRpcDriverConstructorArgs extends RpcDriverConstructorArgs {
+  workerCreationChannel: string
+}
+
+async function wait(ms: number) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms)
+  })
+}
+
+type WorkerBootConfig = { plugins: PluginDefinition[] }
 
 class WindowWorkerHandle {
   private ipcRenderer: import('electron-better-ipc-extra').RendererProcessIpc
 
   private window: import('electron').BrowserWindow
 
+  private config: WorkerBootConfig
+
   private ready = false
 
   constructor(
     ipcRenderer: import('electron-better-ipc-extra').RendererProcessIpc,
     window: import('electron').BrowserWindow,
+    config: WorkerBootConfig,
   ) {
     this.ipcRenderer = ipcRenderer
     this.window = window
-  }
-
-  async wait(ms: number): Promise<void> {
-    return new Promise((resolve): void => {
-      setTimeout(resolve, ms)
-    })
+    this.config = config
   }
 
   destroy(): void {
     this.window.destroy()
   }
 
+  // waits for a new worker to start, and then sends it its bootstrap configuration
+  async setup() {
+    if (!this.ready) {
+      let readyForConfig = false
+      while (!readyForConfig) {
+        await wait(1000)
+        readyForConfig = !!(await this.ipcRenderer.callRenderer(
+          this.window,
+          'ready_for_configuration',
+        ))
+      }
+
+      const result = await this.ipcRenderer.callRenderer(
+        this.window,
+        'configure',
+        this.config,
+      )
+      if (!result) {
+        throw new Error('failed to configure worker')
+      }
+      this.ready = true
+    }
+  }
+
   async call(
     functionName: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    filteredArgs?: any,
-    options = {},
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): Promise<any> {
-    // The window can have been created, but still not be ready, and any
-    // `callRenderer` call to that window just returns Promise<undefined>
-    // instead of an error, which makes failures hard to track down. For now
-    // we'll just wait until it's ready until we find a better option.
-    while (!this.ready) {
-      // eslint-disable-next-line no-await-in-loop
-      await this.wait(1000)
-      // eslint-disable-next-line no-await-in-loop
-      this.ready = !!(await this.ipcRenderer.callRenderer(this.window, 'ready'))
+    filteredArgs?: Record<string, unknown>,
+    opts: { statusCallback?: (arg0: string) => void } = {},
+  ): Promise<unknown> {
+    await this.setup()
+
+    const { statusCallback, ...rest } = opts
+    const channel = `message-${shortid.generate()}`
+    const listener = (_event: unknown, message: string) => {
+      if (opts.statusCallback) {
+        opts.statusCallback(message)
+      }
     }
-    return this.ipcRenderer.callRenderer(
+    this.ipcRenderer.on(channel, listener)
+    const result = await this.ipcRenderer.callRenderer(
       this.window,
       'call',
       functionName,
-      filteredArgs,
-      options,
+      { ...filteredArgs, channel },
+      rest,
     )
+    this.ipcRenderer.removeListener(channel, listener)
+    return result
   }
 }
 
 export default class ElectronRpcDriver extends BaseRpcDriver {
-  makeWorker: () => WindowWorkerHandle
+  name = 'ElectronRpcDriver'
 
-  constructor({ workerCreationChannel }: { workerCreationChannel: string }) {
-    super()
-    if (!electron)
-      throw new Error(
-        'Cannot use ElectronRpcDriver without electron available globally',
-      )
-    const electronRemote = electron.remote
+  bootConfig: WorkerBootConfig
+
+  channel: string
+
+  constructor(
+    args: ElectronRpcDriverConstructorArgs,
+    bootConfig: WorkerBootConfig,
+  ) {
+    super(args)
+    const { workerCreationChannel } = args
+
+    this.bootConfig = bootConfig
+    this.channel = workerCreationChannel
+  }
+
+  makeWorker(): WindowWorkerHandle {
     const { ipcRenderer } = electronBetterIpc
-    if (!ipcRenderer)
+    if (!ipcRenderer) {
       throw new Error(
         'Cannot use ElectronRpcDriver without ipcRenderer from electron-better-ipc-extra',
       )
-
-    this.makeWorker = (): WindowWorkerHandle => {
-      const workerId = ipcRenderer.sendSync(workerCreationChannel)
-      const window = electronRemote.BrowserWindow.fromId(workerId)
-      return new WindowWorkerHandle(ipcRenderer, window)
     }
+    if (!electron) {
+      throw new Error(
+        'Cannot use ElectronRpcDriver without electron available globally',
+      )
+    }
+    const electronRemote = electron.remote
+    const workerId = ipcRenderer.sendSync(this.channel)
+    const window = electronRemote.BrowserWindow.fromId(workerId)
+    const worker = new WindowWorkerHandle(ipcRenderer, window, this.bootConfig)
+    return worker
   }
 
-  call(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    pluginManager: any,
-    stateGroupName: string,
+  async call(
+    pluginManager: PluginManager,
+    sessionId: string,
     functionName: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    args: any,
+    args: {},
     options = {},
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ): any {
-    return (
-      super
-        .call(pluginManager, stateGroupName, functionName, args, options)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .then((r: any) => {
-          if (r && r.imageData) {
-            const img = new Image()
-            img.src = r.imageData.dataURL
-            r.imageData = img
-          }
-          return r
-        })
+  ): Promise<unknown> {
+    const r = await super.call(
+      pluginManager,
+      sessionId,
+      functionName,
+      args,
+      options,
     )
+
+    if (typeof r === 'object' && r !== null && 'imageData' in r) {
+      const img = new Image()
+      // @ts-ignore
+      img.src = r.imageData.dataURL
+      // @ts-ignore
+      r.imageData = img
+    }
+    return r
   }
 }

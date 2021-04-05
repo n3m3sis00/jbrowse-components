@@ -24,19 +24,13 @@ function getfetch(url: RequestInfo, opts: RequestInit = {}): Promise<Response> {
     ...opts,
   })
 }
-export interface RangeResponse {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  headers: Record<string, any>
-  requestDate: Date
-  responseDate: Date
-  buffer: Buffer
-}
+
 async function fetchBinaryRange(
   url: string,
   start: number,
   end: number,
   options: { headers?: HeadersInit; signal?: AbortSignal } = {},
-): Promise<RangeResponse> {
+) {
   const requestDate = new Date()
   const requestHeaders = { ...options.headers, range: `bytes=${start}-${end}` }
   const res = await getfetch(url, {
@@ -81,13 +75,13 @@ async function fetchBinaryRange(
 
 const globalRangeCache = new HttpRangeFetcher({
   fetch: fetchBinaryRange,
-  size: 100 * 1024 * 1024, // 100MB
-  chunkSize: 2 ** 16, // 64KB
-  aggregationTime: 500,
+  size: 500 * 1024 * 1024, // 500MB
+  chunkSize: 2 ** 17, // 128KB
+  maxFetchSize: 100 * 1024 * 1024,
   minimumTTL: 300000000,
 })
 
-function globalCacheFetch(
+async function globalCacheFetch(
   url: RequestInfo,
   opts?: RequestInit,
 ): Promise<Response> {
@@ -97,7 +91,7 @@ function globalCacheFetch(
   if (requestHeaders) {
     if (requestHeaders instanceof Headers) range = requestHeaders.get('range')
     else if (Array.isArray(requestHeaders))
-      [, range] = requestHeaders.find(([key, val]) => key === 'range') || [
+      [, range] = requestHeaders.find(([key]) => key === 'range') || [
         undefined,
         undefined,
       ]
@@ -109,28 +103,18 @@ function globalCacheFetch(
       const [, start, end] = rangeParse
       const s = parseInt(start, 10)
       const e = parseInt(end, 10)
-      return globalRangeCache
-        .getRange(url, s, e - s + 1, {
-          signal: opts && opts.signal,
-        })
-        .then((response: RangeResponse) => {
-          let { headers } = response
-          if (!(headers instanceof Map)) {
-            headers = new Map(Object.entries(headers))
-          }
-          return {
-            status: 206,
-            ok: true,
-            async arrayBuffer(): Promise<Buffer> {
-              return response.buffer
-            },
-            headers,
-          }
-        })
+      const response = await (globalRangeCache.getRange(url, s, e - s + 1, {
+        signal: opts && opts.signal,
+      }) as ReturnType<typeof fetchBinaryRange>)
+      const { headers } = response
+      return new Response(response.buffer, { status: 206, headers })
     }
   }
 
   return getfetch(url, opts)
+}
+export function clearCache() {
+  globalRangeCache.reset()
 }
 
 export function openUrl(url: string): GenericFilehandle {

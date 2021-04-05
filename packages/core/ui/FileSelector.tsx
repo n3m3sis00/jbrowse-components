@@ -7,48 +7,52 @@ import Typography from '@material-ui/core/Typography'
 import ToggleButton from '@material-ui/lab/ToggleButton'
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup'
 import { observer } from 'mobx-react'
-import React, { useState, MouseEvent } from 'react'
+import React, { useState } from 'react'
 import {
-  IFileLocation,
-  IUriLocation,
-  ILocalPathLocation,
-  IBlobLocation,
-} from '../mst-types'
+  FileLocation,
+  UriLocation,
+  LocalPathLocation,
+  BlobLocation,
+} from '../util/types'
 
-const isElectron = !!window.electron
+const isElectron = typeof window !== 'undefined' && Boolean(window.electron)
 
-function isUriLocation(location: IFileLocation): location is IUriLocation {
-  return (location as IUriLocation).uri !== undefined
+function isUriLocation(location: FileLocation): location is UriLocation {
+  return 'uri' in location
 }
 
 function isLocalPathLocation(
-  location: IFileLocation,
-): location is ILocalPathLocation {
-  return (location as ILocalPathLocation).localPath !== undefined
+  location: FileLocation,
+): location is LocalPathLocation {
+  return 'localPath' in location
 }
 
-function isBlobLocation(location: IFileLocation): location is IBlobLocation {
-  return (location as IBlobLocation).blob !== undefined
+function isBlobLocation(location: FileLocation): location is BlobLocation {
+  return 'blob' in location
 }
 
 const FileLocationEditor = observer(
   (props: {
-    location?: IFileLocation
-    setLocation: Function
+    location?: FileLocation
+    setLocation: (param: FileLocation) => void
     name?: string
     description?: string
+    localFileAllowed?: boolean
   }) => {
-    const { location, name, description } = props
-    const fileOrUrl = location && isUriLocation(location) ? 'url' : 'file'
+    const { location, name, description, localFileAllowed = isElectron } = props
+    const fileOrUrl =
+      (location && isUriLocation(location)) || !localFileAllowed
+        ? 'url'
+        : 'file'
     const [fileOrUrlState, setFileOrUrlState] = useState(fileOrUrl)
 
     const handleFileOrUrlChange = (
-      event: React.MouseEvent<HTMLElement>,
+      _event: unknown,
       newValue: string | null,
     ) => {
       if (newValue === 'url') {
         setFileOrUrlState('url')
-      } else {
+      } else if (localFileAllowed) {
         setFileOrUrlState('file')
       }
     }
@@ -62,17 +66,14 @@ const FileLocationEditor = observer(
             <ToggleButtonGroup
               value={fileOrUrlState}
               exclusive
-              size="small"
               onChange={handleFileOrUrlChange}
               aria-label="file or url picker"
             >
-              <ToggleButton
-                value="file"
-                aria-label="local file"
-                disabled={!isElectron}
-              >
-                File
-              </ToggleButton>
+              {localFileAllowed ? (
+                <ToggleButton value="file" aria-label="local file">
+                  File
+                </ToggleButton>
+              ) : null}
               <ToggleButton value="url" aria-label="url">
                 Url
               </ToggleButton>
@@ -93,7 +94,7 @@ const FileLocationEditor = observer(
 )
 
 const UrlChooser = (props: {
-  location?: IFileLocation
+  location?: FileLocation
   setLocation: Function
 }) => {
   const { location, setLocation } = props
@@ -104,8 +105,8 @@ const UrlChooser = (props: {
   }
   return (
     <TextField
-      margin="dense"
       fullWidth
+      inputProps={{ 'data-testid': 'urlInput' }}
       defaultValue={location && isUriLocation(location) ? location.uri : ''}
       onChange={handleChange}
     />
@@ -113,7 +114,7 @@ const UrlChooser = (props: {
 }
 
 const LocalFileChooser = observer(
-  (props: { location?: IFileLocation; setLocation: Function }) => {
+  (props: { location?: FileLocation; setLocation: Function }) => {
     const { location, setLocation } = props
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       const { target } = event
@@ -134,7 +135,7 @@ const LocalFileChooser = observer(
 
     return (
       <div style={{ position: 'relative' }}>
-        <Button size="small" variant="outlined" component="label">
+        <Button variant="outlined" component="label">
           Choose File
           <input
             type="file"

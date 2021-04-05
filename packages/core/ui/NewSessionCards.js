@@ -39,11 +39,6 @@ function NewSessionCard({ name, onClick, image }) {
         raised={Boolean(hovered)}
       >
         <CardMedia className={classes.media} image={image} />
-        {/* <CardContent
-          style={{ textAlign: 'center', margin: 'auto', padding: 0 }}
-        >
-          {children}
-        </CardContent> */}
       </Card>
       <Typography variant="subtitle2" className={classes.name}>
         {name}
@@ -65,84 +60,7 @@ NewSessionCard.defaultProps = {
 }
 
 const emptySessionSnapshot = {
-  name: `New Session ${new Date(Date.now()).toISOString()}`,
-  menuBars: [
-    {
-      type: 'MainMenuBar',
-      menus: [
-        {
-          name: 'File',
-          menuItems: [
-            {
-              name: 'Back to Welcome Screen',
-              icon: 'arrow_back',
-              callback:
-                'function(session) {session.activateSession(undefined)}',
-            },
-            {
-              name: 'New linear genome view',
-              icon: 'line_style',
-              callback:
-                "function(session) { session.addView('LinearGenomeView', {})}",
-            },
-            {
-              name: 'New circular view',
-              icon: 'data_usage',
-              callback:
-                "function(session) { session.addView('CircularView', {})}",
-            },
-            {
-              name: 'New SV inspector',
-              icon: 'table_chart',
-              callback:
-                "function(session) { session.addView('SvInspectorView', {})}",
-            },
-            {
-              name: 'Open tabular data',
-              icon: 'view_comfy',
-              callback:
-                "function(session) { session.addView('SpreadsheetView', {})}",
-            },
-            {
-              name: 'Open new track',
-              icon: 'note_add',
-              callback: `function(session) {
-const drawerWidget = session.addDrawerWidget(
-      'AddTrackDrawerWidget',
-      'addTrackDrawerWidget',
-    )
-    session.showDrawerWidget(drawerWidget)`,
-            },
-            {
-              name: 'Open new connection',
-              icon: 'input',
-              callback: `function(session) {
-const drawerWidget = session.addDrawerWidget(
-      'AddConnectionDrawerWidget',
-      'addConnectionDrawerWidget',
-    )
-    session.showDrawerWidget(drawerWidget)`,
-            },
-          ],
-        },
-        {
-          name: 'Help',
-          menuItems: [
-            {
-              name: 'About',
-              icon: 'info',
-              callback: 'openAbout',
-            },
-            {
-              name: 'Help',
-              icon: 'help',
-              callback: 'openHelp',
-            },
-          ],
-        },
-      ],
-    },
-  ],
+  name: `New session ${new Date().toLocaleString()}`,
   connections: {},
 }
 
@@ -150,10 +68,47 @@ export function NewEmptySession({ root }) {
   function onClick() {
     root.activateSession(emptySessionSnapshot)
   }
-  return <NewSessionCard name={'Empty'} onClick={onClick} image={emptyIcon} />
+  return <NewSessionCard name="Empty" onClick={onClick} image={emptyIcon} />
 }
 
 NewEmptySession.propTypes = {
+  root: MobxPropTypes.objectOrObservableObject.isRequired,
+}
+
+export function ProceedEmptySession({ root }) {
+  function onClick() {
+    const snapshot = {
+      ...emptySessionSnapshot,
+      name: `New session ${new Date().toLocaleString()}`,
+      views: [],
+    }
+    root.setSession(snapshot)
+  }
+  return <NewSessionCard name="Empty" onClick={onClick} image={emptyIcon} />
+}
+ProceedEmptySession.propTypes = {
+  root: MobxPropTypes.objectOrObservableObject.isRequired,
+}
+
+export function AddLinearGenomeViewToSession({ root }) {
+  const launchLGV = () => {
+    const snapshot = {
+      ...emptySessionSnapshot,
+      name: `New session ${new Date().toLocaleString()}`,
+      views: [{ type: 'LinearGenomeView' }],
+    }
+    root.setSession(snapshot)
+  }
+
+  return (
+    <NewSessionCard
+      name="Linear Genome View"
+      onClick={launchLGV}
+      image={linearGenomeViewIcon}
+    />
+  )
+}
+AddLinearGenomeViewToSession.propTypes = {
   root: MobxPropTypes.objectOrObservableObject.isRequired,
 }
 
@@ -161,9 +116,7 @@ export function NewLinearGenomeViewSession({ root }) {
   const launchLGVSession = () => {
     const snapshot = {
       ...emptySessionSnapshot,
-      name: `New Linear Genome View Session ${new Date(
-        Date.now(),
-      ).toISOString()}`,
+      name: `New session ${new Date().toLocaleString()}`,
       views: [{ type: 'LinearGenomeView' }],
     }
     root.activateSession(snapshot)
@@ -171,10 +124,10 @@ export function NewLinearGenomeViewSession({ root }) {
 
   return (
     <NewSessionCard
-      name={'Linear Genome View'}
+      name="Linear Genome View"
       onClick={launchLGVSession}
       image={linearGenomeViewIcon}
-    ></NewSessionCard>
+    />
   )
 }
 
@@ -186,7 +139,7 @@ export function NewSVInspectorSession({ root }) {
   const launchSVSession = () => {
     const snapshot = {
       ...emptySessionSnapshot,
-      name: `New SV Inspector Session ${new Date(Date.now()).toISOString()}`,
+      name: `New session ${new Date().toLocaleString()}`,
       views: [
         {
           type: 'SvInspectorView',
@@ -206,5 +159,28 @@ export function NewSVInspectorSession({ root }) {
 }
 
 NewSVInspectorSession.propTypes = {
+  root: MobxPropTypes.objectOrObservableObject.isRequired,
+}
+
+export function AddSVInspectorToSession({ root }) {
+  const launchSVSession = () => {
+    const snapshot = {
+      ...emptySessionSnapshot,
+      name: `New session ${new Date().toLocaleString()}`,
+      views: [{ type: 'SvInspectorView' }],
+    }
+    root.setSession(snapshot)
+  }
+  return (
+    <NewSessionCard
+      name="Structural Variant Inspector"
+      onClick={launchSVSession}
+      style={{ padding: 0 }}
+      image={svInspectorIcon}
+    />
+  )
+}
+
+AddSVInspectorToSession.propTypes = {
   root: MobxPropTypes.objectOrObservableObject.isRequired,
 }

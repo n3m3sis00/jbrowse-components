@@ -1,0 +1,23 @@
+{
+  "assemblies": [
+    {
+      "name": "testAssembly",
+      "sequence": {
+        "type": "testSequenceTrack",
+        "trackId": "",
+        "adapter": {
+          "type": "testSeqAdapter",
+          "twoBitLocation": {
+            "uri": "test.2bit"
+          }
+        }
+      }
+    }
+  ],
+  "configuration": {},
+  "connections": [],
+  "defaultSession": {
+    "name": "New Session"
+  },
+  "tracks": []
+}
